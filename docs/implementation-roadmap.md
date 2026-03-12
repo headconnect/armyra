@@ -27,6 +27,7 @@
 - Planning now compares the chosen handoff edges against the strongest setup corridor and warns when the rep appears to be sending parents in from the wrong side of the venue.
 - The venue scan workflow now supports explicit landmark roles, so the club can tag captured objects as start-side candidates, recovery-side candidates, or general references.
 - Venue-scan readiness now scores those landmark roles directly and shows a handoff checklist, so a scan is not considered parent-safe just because edge labels happen to exist.
+- Venue-scan readiness now also checks that the chosen start and recovery edges are backed by correctly tagged landmarks, which reduces the risk of handoff drift from manual edge overrides.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.

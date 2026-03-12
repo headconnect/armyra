@@ -42,6 +42,7 @@
   - See guidance when the chosen start/recovery edges do not line up with the best venue approach direction
   - Tag captured landmarks as start-side candidates, recovery-side candidates, or general references
   - See a handoff checklist showing whether the scan includes explicit start-side, recovery-side, and general-reference landmarks
+  - Get warned if the chosen start/recovery edges are not backed by the corresponding tagged landmarks
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

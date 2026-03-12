@@ -172,8 +172,22 @@ struct MockVenueScanService: VenueScanService {
             return "Tag one captured object as the start-side candidate so the parent knows exactly where to begin relocalization."
         }
 
+        if let preferredStartEdge,
+           !landmarks.contains(where: {
+               $0.label.caseInsensitiveCompare(preferredStartEdge) == .orderedSame && $0.role == .startCandidate
+           }) {
+            return "The chosen start edge is not tagged as a start-side candidate yet. Re-tag it before locking the scan."
+        }
+
         if !hasRecoveryCandidate {
             return "Tag a separate captured object as the recovery-side candidate so the parent has a clear fallback edge."
+        }
+
+        if let preferredRecoveryEdge,
+           !landmarks.contains(where: {
+               $0.label.caseInsensitiveCompare(preferredRecoveryEdge) == .orderedSame && $0.role == .recoveryCandidate
+           }) {
+            return "The chosen recovery edge is not tagged as a recovery-side candidate yet. Re-tag it before locking the scan."
         }
 
         if preferredStartEdge == nil {

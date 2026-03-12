@@ -116,4 +116,30 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.level, .needsWork)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("recovery-side candidate") }))
     }
+
+    func testChosenEdgesMustMatchTaggedRoles() {
+        let session = VenueScanSessionState(
+            venueName: "East Ground",
+            capturedLandmarks: ["West fence", "Clubhouse", "Floodlight mast", "House roof", "Car park gate"],
+            landmarks: [
+                VenueLandmark(label: "West fence", role: .general),
+                VenueLandmark(label: "Clubhouse", role: .startCandidate),
+                VenueLandmark(label: "Floodlight mast", role: .recoveryCandidate),
+                VenueLandmark(label: "House roof", role: .general),
+                VenueLandmark(label: "Car park gate", role: .general),
+            ],
+            coveredSides: 3,
+            preferredStartEdge: "West fence",
+            preferredRecoveryEdge: "House roof",
+            readinessScore: 0.9,
+            phase: .ready,
+            recommendedHint: "Use the clubhouse side."
+        )
+
+        let summary = VenueScanReadinessAnalyzer.summarize(session: session)
+
+        XCTAssertEqual(summary.level, .caution)
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("chosen start edge") }))
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("chosen recovery edge") }))
+    }
 }

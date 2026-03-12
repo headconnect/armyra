@@ -60,6 +60,8 @@ public enum VenueScanReadinessAnalyzer {
             recoveryEdgeLabel: session.preferredRecoveryEdge,
             hasPreferredStartEdge: session.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: session.preferredRecoveryEdge?.isEmpty == false,
+            preferredStartEdgeMatchesRole: roleMatches(label: session.preferredStartEdge, role: .startCandidate, landmarks: session.landmarks),
+            preferredRecoveryEdgeMatchesRole: roleMatches(label: session.preferredRecoveryEdge, role: .recoveryCandidate, landmarks: session.landmarks),
             readinessScore: session.readinessScore,
             relocalizationHintCount: derivedHintCount,
             startCandidateCount: roleCounts.startCandidateCount,
@@ -78,6 +80,8 @@ public enum VenueScanReadinessAnalyzer {
             recoveryEdgeLabel: venueScan.preferredRecoveryEdge,
             hasPreferredStartEdge: venueScan.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: venueScan.preferredRecoveryEdge?.isEmpty == false,
+            preferredStartEdgeMatchesRole: roleMatches(label: venueScan.preferredStartEdge, role: .startCandidate, landmarks: venueScan.landmarks),
+            preferredRecoveryEdgeMatchesRole: roleMatches(label: venueScan.preferredRecoveryEdge, role: .recoveryCandidate, landmarks: venueScan.landmarks),
             readinessScore: venueScan.scanCoverageScore,
             relocalizationHintCount: venueScan.recommendedRelocalizationHints.count,
             startCandidateCount: roleCounts.startCandidateCount,
@@ -93,6 +97,8 @@ public enum VenueScanReadinessAnalyzer {
         recoveryEdgeLabel: String?,
         hasPreferredStartEdge: Bool,
         hasPreferredRecoveryEdge: Bool,
+        preferredStartEdgeMatchesRole: Bool,
+        preferredRecoveryEdgeMatchesRole: Bool,
         readinessScore: Double,
         relocalizationHintCount: Int,
         startCandidateCount: Int,
@@ -174,6 +180,14 @@ public enum VenueScanReadinessAnalyzer {
                 )
             )
             score -= landmarkCount >= 4 ? 0.08 : 0.14
+        } else if hasPreferredStartEdge && !preferredStartEdgeMatchesRole {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "The chosen start edge is not backed by a landmark tagged as a start-side candidate. Re-tag the landmark or pick a different start edge.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
         }
 
         if !hasPreferredRecoveryEdge {
@@ -194,6 +208,14 @@ public enum VenueScanReadinessAnalyzer {
                 )
             )
             score -= coveredSides >= 3 ? 0.08 : 0.14
+        } else if hasPreferredRecoveryEdge && !preferredRecoveryEdgeMatchesRole {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "The chosen recovery edge is not backed by a landmark tagged as a recovery-side candidate. Re-tag the landmark or pick a different recovery edge.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
         }
 
         if let startEdgeLabel, let recoveryEdgeLabel,
@@ -269,5 +291,12 @@ public enum VenueScanReadinessAnalyzer {
         let recoveryCandidateCount = landmarks.filter { $0.role == .recoveryCandidate }.count
         let generalLandmarkCount = landmarks.filter { $0.role == .general }.count
         return (startCandidateCount, recoveryCandidateCount, generalLandmarkCount)
+    }
+
+    private static func roleMatches(label: String?, role: LandmarkRole, landmarks: [VenueLandmark]) -> Bool {
+        guard let label, !label.isEmpty else { return false }
+        return landmarks.contains {
+            $0.label.caseInsensitiveCompare(label) == .orderedSame && $0.role == role
+        }
     }
 }
