@@ -23,6 +23,9 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
     public var score: Double
     public var canLockForHandoff: Bool
     public var summary: String
+    public var startCandidateCount: Int
+    public var recoveryCandidateCount: Int
+    public var generalLandmarkCount: Int
     public var issues: [VenueScanReadinessIssue]
 
     public init(
@@ -30,12 +33,18 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         score: Double,
         canLockForHandoff: Bool,
         summary: String,
+        startCandidateCount: Int,
+        recoveryCandidateCount: Int,
+        generalLandmarkCount: Int,
         issues: [VenueScanReadinessIssue]
     ) {
         self.level = level
         self.score = score
         self.canLockForHandoff = canLockForHandoff
         self.summary = summary
+        self.startCandidateCount = startCandidateCount
+        self.recoveryCandidateCount = recoveryCandidateCount
+        self.generalLandmarkCount = generalLandmarkCount
         self.issues = issues
     }
 }
@@ -43,6 +52,7 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
 public enum VenueScanReadinessAnalyzer {
     public static func summarize(session: VenueScanSessionState) -> VenueScanReadinessSummary {
         let derivedHintCount = session.coveredSides >= 3 && session.capturedLandmarks.count >= 4 ? 2 : 1
+        let roleCounts = roleCounts(for: session.landmarks)
         return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
@@ -51,12 +61,16 @@ public enum VenueScanReadinessAnalyzer {
             hasPreferredStartEdge: session.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: session.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: session.readinessScore,
-            relocalizationHintCount: derivedHintCount
+            relocalizationHintCount: derivedHintCount,
+            startCandidateCount: roleCounts.startCandidateCount,
+            recoveryCandidateCount: roleCounts.recoveryCandidateCount,
+            generalLandmarkCount: roleCounts.generalLandmarkCount
         )
     }
 
     public static func summarize(venueScan: VenueScan) -> VenueScanReadinessSummary {
         let estimatedSides = max(1, min(Int(round(venueScan.scanCoverageScore * 4)), 4))
+        let roleCounts = roleCounts(for: venueScan.landmarks)
         return summarize(
             landmarkCount: venueScan.landmarkNotes.count,
             coveredSides: estimatedSides,
@@ -65,7 +79,10 @@ public enum VenueScanReadinessAnalyzer {
             hasPreferredStartEdge: venueScan.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: venueScan.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: venueScan.scanCoverageScore,
-            relocalizationHintCount: venueScan.recommendedRelocalizationHints.count
+            relocalizationHintCount: venueScan.recommendedRelocalizationHints.count,
+            startCandidateCount: roleCounts.startCandidateCount,
+            recoveryCandidateCount: roleCounts.recoveryCandidateCount,
+            generalLandmarkCount: roleCounts.generalLandmarkCount
         )
     }
 
@@ -77,7 +94,10 @@ public enum VenueScanReadinessAnalyzer {
         hasPreferredStartEdge: Bool,
         hasPreferredRecoveryEdge: Bool,
         readinessScore: Double,
-        relocalizationHintCount: Int
+        relocalizationHintCount: Int,
+        startCandidateCount: Int,
+        recoveryCandidateCount: Int,
+        generalLandmarkCount: Int
     ) -> VenueScanReadinessSummary {
         var issues: [VenueScanReadinessIssue] = []
         var score = min(max(readinessScore, 0), 1)
@@ -146,6 +166,16 @@ public enum VenueScanReadinessAnalyzer {
             score -= 0.08
         }
 
+        if startCandidateCount == 0 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "No captured landmark has been tagged as a start-side candidate yet. Tag the clearest setup-side object before handoff.",
+                    level: landmarkCount >= 4 ? .caution : .needsWork
+                )
+            )
+            score -= landmarkCount >= 4 ? 0.08 : 0.14
+        }
+
         if !hasPreferredRecoveryEdge {
             issues.append(
                 VenueScanReadinessIssue(
@@ -154,6 +184,16 @@ public enum VenueScanReadinessAnalyzer {
                 )
             )
             score -= 0.08
+        }
+
+        if recoveryCandidateCount == 0 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "No captured landmark has been tagged as a recovery-side candidate yet. The club should mark a clear fallback edge for parents.",
+                    level: coveredSides >= 3 ? .caution : .needsWork
+                )
+            )
+            score -= coveredSides >= 3 ? 0.08 : 0.14
         }
 
         if let startEdgeLabel, let recoveryEdgeLabel,
@@ -175,6 +215,16 @@ public enum VenueScanReadinessAnalyzer {
                 )
             )
             score -= 0.08
+        }
+
+        if generalLandmarkCount == 0 && landmarkCount >= 3 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "All captured landmarks are tagged as handoff edges. Keep at least one general reference so recovery is not tied to only two objects.",
+                    level: .caution
+                )
+            )
+            score -= 0.05
         }
 
         score = min(max(score, 0), 1)
@@ -203,7 +253,21 @@ public enum VenueScanReadinessAnalyzer {
             score: score,
             canLockForHandoff: level == .ready,
             summary: summary,
+            startCandidateCount: startCandidateCount,
+            recoveryCandidateCount: recoveryCandidateCount,
+            generalLandmarkCount: generalLandmarkCount,
             issues: issues
         )
+    }
+
+    private static func roleCounts(for landmarks: [VenueLandmark]) -> (
+        startCandidateCount: Int,
+        recoveryCandidateCount: Int,
+        generalLandmarkCount: Int
+    ) {
+        let startCandidateCount = landmarks.filter { $0.role == .startCandidate }.count
+        let recoveryCandidateCount = landmarks.filter { $0.role == .recoveryCandidate }.count
+        let generalLandmarkCount = landmarks.filter { $0.role == .general }.count
+        return (startCandidateCount, recoveryCandidateCount, generalLandmarkCount)
     }
 }

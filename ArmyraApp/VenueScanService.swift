@@ -147,6 +147,7 @@ struct MockVenueScanService: VenueScanService {
                 preferredRecoveryEdge: preferredRecoveryEdge,
                 coveredSides: coveredSides,
                 readinessScore: readinessScore,
+                landmarks: landmarks,
                 fallbackHint: fallbackHint
             )
         )
@@ -157,10 +158,22 @@ struct MockVenueScanService: VenueScanService {
         preferredRecoveryEdge: String?,
         coveredSides: Int,
         readinessScore: Double,
+        landmarks: [VenueLandmark],
         fallbackHint: String
     ) -> String {
+        let hasStartCandidate = landmarks.contains(where: { $0.role == .startCandidate })
+        let hasRecoveryCandidate = landmarks.contains(where: { $0.role == .recoveryCandidate })
+
         if coveredSides <= 1 {
             return "Capture a second landmark-bearing edge before locking the scan. One-sided coverage is not robust enough."
+        }
+
+        if !hasStartCandidate {
+            return "Tag one captured object as the start-side candidate so the parent knows exactly where to begin relocalization."
+        }
+
+        if !hasRecoveryCandidate {
+            return "Tag a separate captured object as the recovery-side candidate so the parent has a clear fallback edge."
         }
 
         if preferredStartEdge == nil {

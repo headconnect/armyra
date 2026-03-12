@@ -26,6 +26,7 @@
 - Planning now also summarizes the best venue-level setup corridor across the whole arrangement, which starts to catch "no sensible approach lane through the ground" problems.
 - Planning now compares the chosen handoff edges against the strongest setup corridor and warns when the rep appears to be sending parents in from the wrong side of the venue.
 - The venue scan workflow now supports explicit landmark roles, so the club can tag captured objects as start-side candidates, recovery-side candidates, or general references.
+- Venue-scan readiness now scores those landmark roles directly and shows a handoff checklist, so a scan is not considered parent-safe just because edge labels happen to exist.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
@@ -40,6 +41,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Deepen the club capture checklist with more explicit re-entry zone language and stronger multi-pitch practicality checks before handoff.
 - Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Use explicit landmark roles more directly in readiness scoring so handoff confidence depends less on label heuristics over time.
+- Add role-aware capture guidance that nudges the rep toward a more balanced landmark spread, not just one start object and one fallback object.
 - Add a more venue-level notion of setup corridors or trolley approach lanes, not just pairwise pitch gaps.
 - Keep turning chalking into a recovery-first workflow by surfacing recovery targets, start-edge cues, and trusted/not-trusted guidance states directly in the main UI.
 - Feed more of the chalking progression from live AR status so the simulator controls become an escape hatch rather than the main interaction.

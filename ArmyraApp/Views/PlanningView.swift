@@ -107,6 +107,18 @@ struct PlanningView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Handoff checklist")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ForEach(store.venueLandmarkChecklistLines(), id: \.self) { line in
+                            Label(line, systemImage: "checklist")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                     ForEach(scanReadiness.issues) { issue in
                         Label(
                             issue.message,
@@ -231,6 +243,10 @@ struct PlanningView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
+                    Text("Tag one clear setup-side object and one separate recovery-side object before locking the scan.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     ForEach(session.capturedLandmarks, id: \.self) { landmark in
                         VStack(alignment: .leading, spacing: 6) {
                             Label(landmark, systemImage: "mappin.and.ellipse")

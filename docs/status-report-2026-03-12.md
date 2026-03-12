@@ -2,7 +2,7 @@
 
 ## Branch and CI
 - Active branch: `codex/ios-foundation`
-- Latest completed work is committed through `59fe341` (`Let planners review handoff edges`).
+- Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, and role-aware handoff gating.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
   - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, and uploads the built app artifact.
@@ -18,6 +18,7 @@
 - AR boundary models for relocalization snapshots, local tracking assets, and diagnostics
 - Venue-scan readiness analysis for club-side capture robustness and handoff gating
 - Venue-scan metadata for named preferred start and recovery edges
+- Landmark-role metadata and role-aware readiness scoring for explicit start-side, recovery-side, and general-reference capture
 
 ### App shell
 - `Projects` tab:
@@ -40,6 +41,7 @@
   - See a venue-level best-setup-corridor summary in the top-down planner
   - See guidance when the chosen start/recovery edges do not line up with the best venue approach direction
   - Tag captured landmarks as start-side candidates, recovery-side candidates, or general references
+  - See a handoff checklist showing whether the scan includes explicit start-side, recovery-side, and general-reference landmarks
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking
@@ -81,13 +83,14 @@
 - iOS-native share sheet polish beyond file export plumbing
 - Device signing configuration in `project.yml`
 - Physical iPhone validation
-- Planner-side editing of the auto-suggested start/recovery edges before handoff lock
+- More balanced capture guidance so the rep can tell when too many landmarks are doing double duty as handoff edges instead of general references
 
 ## Recommended next step after context compaction
 Keep tightening the club-side handoff quality:
 - Let the rep review and adjust the suggested start edge and backup recovery edge before locking the scan
 - Add stronger multi-pitch practicality checks beyond overlap, especially around setup room and likely chalking lanes
 - Continue replacing generic capture success with more operational `safe to hand off` criteria as device testing becomes possible
+- Keep improving venue capture guidance so landmark roles and recovery instructions reflect real field-day behavior, not only label heuristics
 
 ## Signing note
 - Apple Developer enrollment appears to be in progress, but the repo is ready for the next signing step once a real Team ID is available.

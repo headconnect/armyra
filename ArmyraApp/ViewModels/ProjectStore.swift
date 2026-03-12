@@ -590,6 +590,27 @@ final class ProjectStore: ObservableObject {
         return VenueScanReadinessAnalyzer.summarize(venueScan: venueScan)
     }
 
+    func venueLandmarkChecklistLines() -> [String] {
+        guard let summary = venueScanReadinessSummary() else { return [] }
+        return [
+            checklistLine(
+                title: "Start-side candidates",
+                count: summary.startCandidateCount,
+                recommendedMinimum: 1
+            ),
+            checklistLine(
+                title: "Recovery-side candidates",
+                count: summary.recoveryCandidateCount,
+                recommendedMinimum: 1
+            ),
+            checklistLine(
+                title: "General references",
+                count: summary.generalLandmarkCount,
+                recommendedMinimum: 1
+            ),
+        ]
+    }
+
     func planningRelocalizationLabel() -> String {
         relocalizationLabel(for: planningTrackingSnapshot?.relocalizationState ?? .unavailable)
     }
@@ -738,6 +759,12 @@ final class ProjectStore: ObservableObject {
         let suffixUnicode = 65 + matching.count
         let suffix = UnicodeScalar(suffixUnicode).map(String.init) ?? "Z"
         return "\(prefix)\(suffix)"
+    }
+
+    private func checklistLine(title: String, count: Int, recommendedMinimum: Int) -> String {
+        let status = count >= recommendedMinimum ? "ok" : "needs review"
+        let noun = count == 1 ? "item" : "items"
+        return "\(title): \(count) \(noun) (\(status))"
     }
 
     static var preview: ProjectStore {
