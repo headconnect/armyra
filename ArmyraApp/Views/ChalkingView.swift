@@ -70,12 +70,17 @@ struct ChalkingView: View {
                                             .foregroundStyle(.secondary)
                                     }
 
-                                    if let diagnostics = store.chalkingDiagnostics() {
-                                        diagnosticsView(diagnostics)
-                                    }
+                                    DisclosureGroup("Diagnostics") {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            if let diagnostics = store.chalkingDiagnostics() {
+                                                diagnosticsView(diagnostics)
+                                            }
 
-                                    if !store.chalkingDiagnosticsHistory.isEmpty {
-                                        diagnosticsHistoryView(store.chalkingDiagnosticsHistory)
+                                            if !store.chalkingDiagnosticsHistory.isEmpty {
+                                                diagnosticsHistoryView(store.chalkingDiagnosticsHistory)
+                                            }
+                                        }
+                                        .padding(.top, 6)
                                     }
 
                                     ForEach(preflight.checklist, id: \.self) { item in
@@ -96,6 +101,16 @@ struct ChalkingView: View {
                         if let session = store.chalkingSession {
                             Section("Active Session") {
                                 VStack(alignment: .leading, spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(store.chalkingOperationalStateLabel())
+                                            .font(.title3.weight(.semibold))
+                                            .foregroundStyle(confidenceColor(session.trackingConfidence))
+
+                                        Text(store.chalkingOperationalStateDetail())
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+
                                     HStack {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(session.layoutName)
@@ -115,9 +130,23 @@ struct ChalkingView: View {
                                     ChalkPathPreviewView(
                                         guideSegments: session.guideSegments,
                                         activeSegmentID: session.currentSegment?.id,
-                                        completedSegmentIDs: Set(session.guideSegments.prefix(session.completedSegments).map(\.id))
+                                        completedSegmentIDs: Set(session.guideSegments.prefix(session.completedSegments).map(\.id)),
+                                        startPoint: store.chalkingStartPoint(),
+                                        recoveryPoint: store.chalkingRecoveryPoint()
                                     )
                                     .frame(height: 220)
+
+                                    HStack {
+                                        Label("Start reference", systemImage: "flag.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.blue)
+
+                                        if store.chalkingRecoveryPoint() != nil {
+                                            Label("Recovery target", systemImage: "location.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(.red)
+                                        }
+                                    }
 
                                     if let currentSegment = session.currentSegment {
                                         VStack(alignment: .leading, spacing: 6) {
@@ -149,6 +178,12 @@ struct ChalkingView: View {
                                     Text(session.recommendedHint)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
+
+                                    if session.trackingConfidence != .good {
+                                        Text("If the overlay stops feeling trustworthy, return to the red marker and face the strongest landmark side before resuming.")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
 
                                     HStack {
                                         Button("Refresh Live Status") {

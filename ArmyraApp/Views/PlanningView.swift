@@ -332,9 +332,15 @@ struct PlanningView: View {
                         ChalkPathPreviewView(
                             guideSegments: guideSegments,
                             activeSegmentID: guideSegments.first?.id,
-                            completedSegmentIDs: []
+                            completedSegmentIDs: [],
+                            startPoint: store.selectedLayoutStartPoint(),
+                            recoveryPoint: nil
                         )
                         .frame(height: 180)
+
+                        Text("Start at the blue marker, then follow the highlighted sequence. This is the same path framing the parent will see in chalking mode.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                         Text(guideSegments.prefix(4).map(\.label).joined(separator: " -> "))
                             .font(.caption)

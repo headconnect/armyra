@@ -2,9 +2,9 @@
 
 ## Branch and CI
 - Active branch: `codex/ios-foundation`
-- Latest completed work is committed through `46e6435` (`Add AR diagnostics history`).
+- Latest completed work is committed through `8ef33ca` (`Add handoff readiness and chalk path previews`).
 - GitHub Actions is green on the latest run:
-  - `23002065572` for commit `46e6435`
+  - `23003603489` for commit `8ef33ca`
   - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, and uploads the built app artifact.
 
 ## What exists now
@@ -34,7 +34,7 @@
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking
-  - Preview the chalk path sequence for the selected layout
+  - Preview the chalk path sequence for the selected layout, including the field-day start reference
 - `Chalking` tab:
   - Select a layout for chalking
   - Start a mock chalking session
@@ -44,6 +44,7 @@
   - Inspect venue-aware preflight and AR diagnostics before device testing
   - See recent AR diagnostics history
   - See named current/upcoming chalk segments instead of only aggregate progress
+  - See a whole-pitch preview with active line, start cue, and recovery target markers
 
 ## Important files
 - Product plan: `docs/ios-ar-football-pitch-plan.md`
@@ -60,8 +61,8 @@
 - Core geometry/persistence: `Sources/ArmyraCore/`
 
 ## Current architectural direction
-- The app is intentionally in a `pre-AR workflow foundation` phase.
-- Planning and chalking flows are being made realistic first, while AR-specific behavior is being isolated behind service abstractions that already compile on iOS.
+- The app is intentionally shifting from a general `pre-AR workflow foundation` into a `field-day UX` phase.
+- Planning and chalking flows are being made trustworthy first, while AR-specific behavior remains isolated behind service abstractions that already compile on iOS.
 - Package models remain app-domain-first so AR persistence can evolve separately from sharing/import/export.
 - Local relocalization assets are now intentionally file-backed and kept outside the exported package.
 
@@ -73,11 +74,10 @@
 - Physical iPhone validation
 
 ## Recommended next step after context compaction
-Drive the first real phone-testing pass:
-- Surface AR session diagnostics and asset information in the UI
-- Verify that a planning scan actually captures a local world map payload
-- Confirm that chalking startup can read and reuse that payload for relocalization
-- After that, begin replacing mock chalking progression with live AR-driven guidance state
+Keep tightening the parent-facing execution loop:
+- Add stronger planner validation around low-confidence venue scans and impractical pitch spacing
+- Make the chalking view communicate start/recovery/active-line context even more clearly than the current text-plus-preview approach
+- Continue replacing manual chalking progression with live AR-driven guidance state as device testing becomes possible
 
 ## Signing note
 - Apple Developer enrollment appears to be in progress, but the repo is ready for the next signing step once a real Team ID is available.

@@ -5,6 +5,8 @@ struct ChalkPathPreviewView: View {
     let guideSegments: [GuideSegment]
     let activeSegmentID: UUID?
     let completedSegmentIDs: Set<UUID>
+    let startPoint: Point2D?
+    let recoveryPoint: Point2D?
 
     var body: some View {
         GeometryReader { proxy in
@@ -41,8 +43,25 @@ struct ChalkPathPreviewView: View {
                         style: StrokeStyle(lineWidth: isActive ? 6 : 4, lineCap: .round)
                     )
                 }
+
+                if let startPoint {
+                    marker("S", at: scaledPoint(startPoint, extent: extent, scale: scale, canvasSize: size), color: .blue)
+                }
+
+                if let recoveryPoint {
+                    marker("R", at: scaledPoint(recoveryPoint, extent: extent, scale: scale, canvasSize: size), color: .red)
+                }
             }
         }
+    }
+
+    private func marker(_ label: String, at point: CGPoint, color: Color) -> some View {
+        Text(label)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.white)
+            .frame(width: 24, height: 24)
+            .background(color, in: Circle())
+            .position(point)
     }
 
     private func strokeColor(isCompleted: Bool, isActive: Bool, kind: GuideSegmentKind) -> Color {

@@ -446,6 +446,53 @@ final class ProjectStore: ObservableObject {
         return FieldGeometryBuilder.build(for: selectedLayout).guideSegments
     }
 
+    func selectedLayoutStartPoint() -> Point2D? {
+        selectedLayoutGuideSegments().first?.segment.start
+    }
+
+    func chalkingStartPoint() -> Point2D? {
+        chalkingSession?.guideSegments.first?.segment.start
+    }
+
+    func chalkingRecoveryPoint() -> Point2D? {
+        guard let session = chalkingSession, session.trackingConfidence != .good else {
+            return nil
+        }
+
+        return session.currentSegment?.segment.start ?? session.guideSegments.first?.segment.start
+    }
+
+    func chalkingOperationalStateLabel() -> String {
+        switch chalkingSession?.trackingConfidence {
+        case .good:
+            return "On track"
+        case .warning:
+            return "Tracking soft"
+        case .recover:
+            return "Recover position"
+        case .none:
+            return "Ready to start"
+        }
+    }
+
+    func chalkingOperationalStateDetail() -> String {
+        guard let session = chalkingSession else {
+            return "Choose a pitch, relocalize, and begin from the marked start edge."
+        }
+
+        switch session.trackingConfidence {
+        case .good:
+            if let currentSegment = session.currentSegment {
+                return "Follow \(currentSegment.label.lowercased()) and keep the trolley aligned with the highlighted path."
+            }
+            return "All chalk segments are complete. Walk the edges once more and confirm the lines look clean."
+        case .warning:
+            return "Keep moving slowly and glance back toward a known landmark edge before continuing the highlighted line."
+        case .recover:
+            return "Pause chalking and return to the marked recovery point before trusting the overlay again."
+        }
+    }
+
     func venueCoverageDescription() -> String {
         let score = venueScanSession?.readinessScore ?? selectedProject?.venueScan.scanCoverageScore ?? 0
         let percentage = Int((score * 100).rounded())

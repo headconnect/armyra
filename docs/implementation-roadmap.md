@@ -18,19 +18,20 @@
 - Planning and chalking now keep a short diagnostics history, which should make on-device relocalization regressions and recoveries easier to spot during field testing.
 - The chalking session now carries named guide segments, which lets the UI show the current chalk segment and the next few segments instead of only aggregate progress.
 - Planning now produces a handoff-oriented readiness summary, and both planning and chalking can render a shared chalk-path preview with the active line highlighted in context.
+- The shared chalk-path preview now also carries explicit start and recovery markers, pushing the parent UX closer to a glanceable field-day workflow instead of a diagnostics-first prototype.
 
-## Active milestone: Pre-AR workflow foundation
-The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
+## Active milestone: Field-day UX
+The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
 
 ### In progress now
-- Add a clearer venue-level workspace that connects planning edits, venue scanning, and future relocalization.
-- Prepare the app shell for signed iPhone deployment by keeping import/export and planning flows independent of simulator-only behavior.
-- Introduce mockable scanning, tracking, relocalization, and local AR-asset persistence services so the workflow can be exercised without camera-based AR.
+- Strengthen planner-side readiness and validation so a saved package clearly communicates whether it is safe to hand to a first-time parent volunteer.
+- Make chalking mode default to whole-pitch context, with the active line, start point, and recovery target all visible at a glance.
+- Keep diagnostics available for device testing, but progressively demote them behind the operational guidance.
 
 ### Next after this slice
-- Add AR-facing abstractions for venue scanning, relocalization confidence, and chalking guidance state.
-- Connect export preview to iOS-native sharing and Files integration.
-- Add visual top-down placement previews to make rotation and offsets easier to reason about.
+- Add clearer planner validation around practical spacing and low-confidence venue scans so `ready for chalking` means something operationally.
+- Keep turning chalking into a recovery-first workflow by surfacing recovery targets, start-edge cues, and trusted/not-trusted guidance states directly in the main UI.
+- Feed more of the chalking progression from live AR status so the simulator controls become an escape hatch rather than the main interaction.
 
 ## Near-term milestones
 ### Milestone 1: Planning workspace
@@ -50,7 +51,7 @@ The current development focus is to make planning and chalking flows realistic b
 - Introduce a venue scan service abstraction that can later wrap `ARKit`/`ARWorldMap`.
 - Model tracking confidence and relocalization hints in a way the chalking UI can react to.
 - Keep AR-specific persistence isolated from app-domain package models.
-- Swap the mock scan and chalking services for real implementations once landmark scanning and relocalization are ready.
+- Swap the mock scan and chalking services for real implementations once landmark scanning and relocalization are ready, while preserving the parent-first chalking UX.
 
 ## Working assumptions
 - The app remains iPhone-first and offline-first.
