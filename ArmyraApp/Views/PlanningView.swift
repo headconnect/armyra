@@ -173,6 +173,22 @@ struct PlanningView: View {
 
                     lockModeButtons
                 }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Enabled Markings")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(store.supportedMarkingsForSelectedLayout(), id: \.self) { marking in
+                        Toggle(
+                            marking.rawValue,
+                            isOn: Binding(
+                                get: { store.isSelectedLayoutMarkingEnabled(marking) },
+                                set: { store.setSelectedLayoutMarking(marking, isEnabled: $0) }
+                            )
+                        )
+                    }
+                }
             } else {
                 Text("Pick a layout card below to edit its placement and dimensions.")
                     .foregroundStyle(.secondary)

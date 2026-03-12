@@ -5,14 +5,15 @@
 - A minimal SwiftUI app shell exists for `Projects`, `Planning`, and `Chalking`.
 - GitHub Actions now runs package tests, generates the Xcode project, builds the iOS simulator app, and uploads the artifact.
 - The planning workspace can now create layouts from templates, inspect export payloads, and edit selected layout dimensions, offsets, rotation, and lock mode.
+- The app now has basic `*.armyrafield` import/export plumbing and project duplication support, which moves it closer to real device testing once Apple signing is configured.
 
 ## Active milestone: Planning workflow foundation
 The current development focus is to move from a static preview app toward a usable planning workflow.
 
 ### In progress now
-- Add package import from a local file and project duplication flows.
 - Add naming and internal-marking editing controls for each selected layout.
 - Add a clearer venue-level workspace summary that shows overlap and fit considerations.
+- Prepare the app shell for signed iPhone deployment by keeping import/export and planning flows independent of simulator-only behavior.
 
 ### Next after this slice
 - Add AR-facing abstractions for venue scanning, relocalization confidence, and chalking guidance state.
@@ -30,6 +31,7 @@ The current development focus is to move from a static preview app toward a usab
 - Import and export `*.armyrafield` files.
 - Validate schema versioning and incompatible package handling.
 - Connect export UI to iOS share sheet and Files integration.
+- Once an Apple development team is configured in the project, validate package import/export and planning flows on a physical iPhone.
 
 ### Milestone 3: AR services
 - Introduce a venue scan service abstraction that can later wrap `ARKit`/`ARWorldMap`.

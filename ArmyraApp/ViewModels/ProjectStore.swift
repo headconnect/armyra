@@ -8,6 +8,8 @@ final class ProjectStore: ObservableObject {
     @Published var selectedTemplateID: UUID?
     @Published var selectedLayoutID: UUID?
     @Published var exportPreview: ExportPreview?
+    @Published var exportDocument: ProjectPackageDocument?
+    @Published var importErrorMessage: String?
 
     struct ExportPreview: Identifiable {
         let id = UUID()
@@ -72,8 +74,17 @@ final class ProjectStore: ObservableObject {
         )
     }
 
+    func prepareExportDocument() {
+        guard let project = selectedProject else { return }
+        exportDocument = ProjectPackageDocument(project: project)
+    }
+
     func dismissExportPreview() {
         exportPreview = nil
+    }
+
+    func dismissImportError() {
+        importErrorMessage = nil
     }
 
     func markingsDescription(for layout: FieldLayout) -> String {
@@ -125,6 +136,74 @@ final class ProjectStore: ObservableObject {
         updateSelectedLayout { layout in
             layout.lockMode = lockMode
         }
+    }
+
+    func setSelectedLayoutMarking(_ marking: LineMarking, isEnabled: Bool) {
+        guard let layout = selectedLayout,
+              let template = selectedProject?.templates.first(where: { $0.id == layout.templateID }),
+              template.supportedMarkings.contains(marking) else {
+            return
+        }
+
+        updateSelectedLayout { layout in
+            if isEnabled {
+                layout.enabledMarkings.insert(marking)
+            } else {
+                layout.enabledMarkings.remove(marking)
+            }
+        }
+    }
+
+    func isSelectedLayoutMarkingEnabled(_ marking: LineMarking) -> Bool {
+        selectedLayout?.enabledMarkings.contains(marking) ?? false
+    }
+
+    func supportedMarkingsForSelectedLayout() -> [LineMarking] {
+        guard let layout = selectedLayout,
+              let template = selectedProject?.templates.first(where: { $0.id == layout.templateID }) else {
+            return []
+        }
+
+        return template.supportedMarkings.sorted { $0.rawValue < $1.rawValue }
+    }
+
+    func duplicateSelectedProject() {
+        guard let project = selectedProject else { return }
+
+        let duplicated = ProjectPackage(
+            projectName: "\(project.projectName) Copy",
+            venueScan: VenueScan(
+                venueName: project.venueScan.venueName,
+                landmarkNotes: project.venueScan.landmarkNotes,
+                recommendedRelocalizationHints: project.venueScan.recommendedRelocalizationHints,
+                scanCoverageScore: project.venueScan.scanCoverageScore,
+                worldMapData: project.venueScan.worldMapData
+            ),
+            templates: project.templates,
+            layouts: project.layouts.map { layout in
+                FieldLayout(
+                    name: layout.name,
+                    templateID: layout.templateID,
+                    dimensions: layout.dimensions,
+                    enabledMarkings: layout.enabledMarkings,
+                    transform: layout.transform,
+                    lockMode: layout.lockMode
+                )
+            },
+            lockedAt: nil
+        )
+
+        projects.append(duplicated)
+        selectProject(duplicated.id)
+    }
+
+    func importProject(from document: ProjectPackageDocument) {
+        projects.append(document.project)
+        selectProject(document.project.id)
+    }
+
+    func handleImportFailure(_ error: Error) {
+        importErrorMessage = error.localizedDescription
     }
 
     func selectedLayoutRotationDegrees() -> Double {

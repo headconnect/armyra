@@ -46,6 +46,10 @@ struct ProjectsView: View {
                                 LabeledContent("Layouts", value: "\(project.layouts.count)")
                                 LabeledContent("Suggested export", value: ProjectPackageStore.suggestedFileName(for: project))
 
+                                Button("Duplicate Project") {
+                                    store.duplicateSelectedProject()
+                                }
+
                                 Button("Preview Export Package") {
                                     store.showExportPreview()
                                 }
