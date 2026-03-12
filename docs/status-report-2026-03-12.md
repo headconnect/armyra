@@ -2,9 +2,9 @@
 
 ## Branch and CI
 - Active branch: `codex/ios-foundation`
-- Latest completed work is committed through `8ef33ca` (`Add handoff readiness and chalk path previews`).
+- Latest completed work is committed through `59fe341` (`Let planners review handoff edges`).
 - GitHub Actions is green on the latest run:
-  - `23003603489` for commit `8ef33ca`
+  - `23009941554` for commit `59fe341`
   - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, and uploads the built app artifact.
 
 ## What exists now
@@ -35,6 +35,7 @@
   - Run a mock venue-scan workflow
   - See a club-facing capture gate with `lock for handoff` versus `save draft anyway`
   - See the suggested preferred start edge and backup recovery edge during capture and after save
+  - Review and change the suggested start/recovery edges before locking the scan
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

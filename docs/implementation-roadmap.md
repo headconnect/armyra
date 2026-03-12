@@ -21,6 +21,7 @@
 - The shared chalk-path preview now also carries explicit start and recovery markers, pushing the parent UX closer to a glanceable field-day workflow instead of a diagnostics-first prototype.
 - The venue scan workspace now has a club-facing capture gate that distinguishes `lock for handoff` from `save draft anyway`, with explicit issues around thin landmarks, one-sided coverage, and weak recovery setup.
 - Venue scans now also carry a named preferred start edge and backup recovery edge, so the club rep is handing off a concrete setup plan rather than only a generic relocalization score.
+- The planner can now review and change the suggested start/recovery edges before locking the scan, and readiness warns if both edges collapse to the same fallback.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
