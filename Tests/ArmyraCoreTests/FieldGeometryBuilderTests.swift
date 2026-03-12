@@ -32,7 +32,9 @@ final class FieldGeometryBuilderTests: XCTestCase {
         )
 
         let geometry = FieldGeometryBuilder.build(for: layout)
+        let start = try XCTUnwrap(geometry.boundary.first?.start)
 
-        XCTAssertEqual(geometry.boundary.first?.start, Point2D(x: -5, y: -15))
+        XCTAssertEqual(start.x, -5, accuracy: 0.000_001)
+        XCTAssertEqual(start.y, -15, accuracy: 0.000_001)
     }
 }
