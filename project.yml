@@ -28,8 +28,29 @@ targets:
     dependencies:
       - package: ArmyraCore
         product: ArmyraCore
+  ArmyraAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: ArmyraAppUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.headconnect.armyra.uitests
+        PRODUCT_NAME: ArmyraAppUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ArmyraApp
+    dependencies:
+      - target: ArmyraApp
 schemes:
   ArmyraApp:
     build:
       targets:
         ArmyraApp: all
+  ArmyraScreenshots:
+    build:
+      targets:
+        ArmyraApp: all
+        ArmyraAppUITests: all
+    test:
+      targets:
+        - name: ArmyraAppUITests

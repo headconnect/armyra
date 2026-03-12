@@ -1,24 +1,41 @@
 import SwiftUI
 import ArmyraCore
 
+enum RootTab: Hashable {
+    case projects
+    case planning
+    case chalking
+}
+
 struct RootView: View {
     @ObservedObject var store: ProjectStore
+    let initialTab: RootTab
     @State private var isExportingDocument = false
     @State private var isImportingDocument = false
+    @State private var selectedTab: RootTab
+
+    init(store: ProjectStore, initialTab: RootTab = .projects) {
+        self.store = store
+        self.initialTab = initialTab
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             ProjectsView(store: store)
+                .tag(RootTab.projects)
                 .tabItem {
                     Label("Projects", systemImage: "square.grid.2x2")
                 }
 
             PlanningView(store: store)
+                .tag(RootTab.planning)
                 .tabItem {
                     Label("Planning", systemImage: "ruler")
                 }
 
             ChalkingView(store: store)
+                .tag(RootTab.chalking)
                 .tabItem {
                     Label("Chalking", systemImage: "figure.walk")
                 }

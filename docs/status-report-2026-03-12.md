@@ -5,7 +5,7 @@
 - Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, and role-aware handoff gating.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
-  - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, and uploads the built app artifact.
+  - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, captures simulator screenshots for the main flows, and uploads both the app artifact and PNG screenshots.
 
 ## What exists now
 ### Core domain
@@ -61,6 +61,9 @@
   - See recent AR diagnostics history
   - See named current/upcoming chalk segments instead of only aggregate progress
   - See a whole-pitch preview with active line, start cue, and recovery target markers
+- CI / verification:
+  - Screenshot automation now captures `Projects`, `Planning`, venue-scan, chalking preflight, and active chalking screens from the iOS simulator
+  - These screenshots are published as GitHub Actions artifacts so UI review is possible without a local Mac build
 
 ## Important files
 - Product plan: `docs/ios-ar-football-pitch-plan.md`
