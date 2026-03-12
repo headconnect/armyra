@@ -44,26 +44,16 @@ public enum PlanningReadinessAnalyzer {
     public static func summarize(project: ProjectPackage) -> PlanningReadinessSummary {
         let overlaps = FieldLayoutAnalysis.overlaps(in: project.layouts)
         let closePairs = FieldLayoutAnalysis.tightSpacing(in: project.layouts, minimumGap: 4)
+        let venueScanReadiness = VenueScanReadinessAnalyzer.summarize(venueScan: project.venueScan)
         var issues: [PlanningReadinessIssue] = []
-        var score = min(max(project.venueScan.scanCoverageScore, 0), 1)
+        var score = venueScanReadiness.score
 
-        if project.venueScan.scanCoverageScore < 0.45 {
-            issues.append(
-                PlanningReadinessIssue(
-                    message: "Landmark coverage is weak. A first-time parent may struggle to relocalize.",
-                    level: .needsWork
-                )
+        issues.append(contentsOf: venueScanReadiness.issues.map {
+            PlanningReadinessIssue(
+                message: $0.message,
+                level: mapVenueScanLevel($0.level)
             )
-            score -= 0.35
-        } else if project.venueScan.scanCoverageScore < 0.7 {
-            issues.append(
-                PlanningReadinessIssue(
-                    message: "Landmark coverage is usable but recovery may require extra coaching.",
-                    level: .caution
-                )
-            )
-            score -= 0.15
-        }
+        })
 
         if overlaps.isEmpty == false {
             issues.append(
@@ -119,9 +109,20 @@ public enum PlanningReadinessAnalyzer {
         return PlanningReadinessSummary(
             level: level,
             score: score,
-            parentSafe: level == .ready || (level == .caution && project.venueScan.scanCoverageScore >= 0.6),
+            parentSafe: level == .ready || (level == .caution && venueScanReadiness.canLockForHandoff),
             summary: summary,
             issues: issues
         )
+    }
+
+    private static func mapVenueScanLevel(_ level: VenueScanReadinessLevel) -> PlanningReadinessLevel {
+        switch level {
+        case .ready:
+            return .ready
+        case .caution:
+            return .caution
+        case .needsWork:
+            return .needsWork
+        }
     }
 }

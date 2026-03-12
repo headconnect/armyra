@@ -10,13 +10,11 @@ protocol VenueScanService {
 
 struct MockVenueScanService: VenueScanService {
     func startSession(for venueScan: VenueScan) -> VenueScanSessionState {
-        VenueScanSessionState(
+        makeSession(
             venueName: venueScan.venueName,
             capturedLandmarks: venueScan.landmarkNotes,
             coveredSides: max(1, min(Int(round(venueScan.scanCoverageScore * 4)), 4)),
-            readinessScore: venueScan.scanCoverageScore,
-            phase: venueScan.scanCoverageScore >= 0.7 ? .ready : .scanning,
-            recommendedHint: venueScan.recommendedRelocalizationHints.first ?? "Walk the touchline and capture stable landmarks."
+            fallbackHint: venueScan.recommendedRelocalizationHints.first ?? "Walk the touchline and capture stable landmarks."
         )
     }
 
@@ -26,35 +24,20 @@ struct MockVenueScanService: VenueScanService {
             capturedLandmarks.append(landmark)
         }
 
-        let readinessScore = min(Double(capturedLandmarks.count) / 6, 1)
-        let phase: VenueScanPhase = readinessScore >= 0.7 ? .ready : .scanning
-
-        return VenueScanSessionState(
+        return makeSession(
             venueName: session.venueName,
             capturedLandmarks: capturedLandmarks,
             coveredSides: min(max(session.coveredSides, 1), 4),
-            readinessScore: readinessScore,
-            phase: phase,
-            recommendedHint: phase == .ready
-                ? "Enough landmarks captured. You can lock this venue or keep improving coverage."
-                : "Capture durable objects on another edge before locking the scan."
+            fallbackHint: session.recommendedHint
         )
     }
 
     func advanceCoverage(session: VenueScanSessionState) -> VenueScanSessionState {
-        let coveredSides = min(session.coveredSides + 1, 4)
-        let readinessScore = max(session.readinessScore, Double(coveredSides) / 4)
-        let phase: VenueScanPhase = readinessScore >= 0.7 ? .ready : .scanning
-
-        return VenueScanSessionState(
+        return makeSession(
             venueName: session.venueName,
             capturedLandmarks: session.capturedLandmarks,
-            coveredSides: coveredSides,
-            readinessScore: readinessScore,
-            phase: phase,
-            recommendedHint: coveredSides >= 3
-                ? "Coverage is broad enough for intermittent landmark loss."
-                : "Try to cover at least one more side so chalking can recover more reliably."
+            coveredSides: min(session.coveredSides + 1, 4),
+            fallbackHint: session.recommendedHint
         )
     }
 
@@ -63,9 +46,73 @@ struct MockVenueScanService: VenueScanService {
             id: original.id,
             venueName: original.venueName,
             landmarkNotes: session.capturedLandmarks,
-            recommendedRelocalizationHints: [session.recommendedHint],
+            recommendedRelocalizationHints: buildRelocalizationHints(for: session),
             scanCoverageScore: session.readinessScore,
             worldMapData: original.worldMapData
         )
+    }
+
+    private func makeSession(
+        venueName: String,
+        capturedLandmarks: [String],
+        coveredSides: Int,
+        fallbackHint: String
+    ) -> VenueScanSessionState {
+        let landmarkScore = min(Double(capturedLandmarks.count) / 6, 1)
+        let sideScore = Double(coveredSides) / 4
+        let readinessScore = min((landmarkScore * 0.55) + (sideScore * 0.45), 1)
+        let phase: VenueScanPhase = readinessScore >= 0.8 && coveredSides >= 3 && capturedLandmarks.count >= 4 ? .ready : .scanning
+
+        return VenueScanSessionState(
+            venueName: venueName,
+            capturedLandmarks: capturedLandmarks,
+            coveredSides: coveredSides,
+            readinessScore: readinessScore,
+            phase: phase,
+            recommendedHint: recommendation(
+                capturedLandmarks: capturedLandmarks,
+                coveredSides: coveredSides,
+                readinessScore: readinessScore,
+                fallbackHint: fallbackHint
+            )
+        )
+    }
+
+    private func recommendation(
+        capturedLandmarks: [String],
+        coveredSides: Int,
+        readinessScore: Double,
+        fallbackHint: String
+    ) -> String {
+        if coveredSides <= 1 {
+            return "Capture a second landmark-bearing edge before locking the scan. One-sided coverage is not robust enough."
+        }
+
+        if capturedLandmarks.count < 3 {
+            return "Add more durable landmarks like fences, buildings, or floodlight masts before locking the scan."
+        }
+
+        if readinessScore < 0.8 || coveredSides < 3 {
+            return "Keep improving coverage until the parent has a clear start edge and a separate recovery edge."
+        }
+
+        return capturedLandmarks.first.map {
+            "Coverage is strong. Use \($0.lowercased()) as the preferred start edge and keep another landmark side in reserve for recovery."
+        } ?? fallbackHint
+    }
+
+    private func buildRelocalizationHints(for session: VenueScanSessionState) -> [String] {
+        let primaryLandmark = session.capturedLandmarks.first?.lowercased()
+        let recoveryLandmark = session.capturedLandmarks.dropFirst().first?.lowercased()
+
+        let startHint = primaryLandmark.map {
+            "Start chalking from the \($0) side for the strongest initial relocalization."
+        } ?? session.recommendedHint
+
+        let recoveryHint = recoveryLandmark.map {
+            "If tracking softens, pause and turn back toward the \($0) side before resuming."
+        } ?? "If tracking softens, return to the strongest landmark edge before resuming."
+
+        return [startHint, recoveryHint, session.recommendedHint]
     }
 }

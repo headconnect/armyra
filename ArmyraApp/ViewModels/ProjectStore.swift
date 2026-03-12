@@ -274,9 +274,14 @@ final class ProjectStore: ObservableObject {
         recordPlanningDiagnostics(.refreshed)
     }
 
-    func finalizeVenueScanSession() {
+    func finalizeVenueScanSession(forceDraftSave: Bool = false) {
         guard let projectIndex = selectedProjectIndex,
               let venueScanSession else { return }
+
+        let readiness = VenueScanReadinessAnalyzer.summarize(session: venueScanSession)
+        if !forceDraftSave && !readiness.canLockForHandoff {
+            return
+        }
 
         let finalizedScan = venueScanService.finalize(
             session: venueScanSession,
@@ -497,6 +502,15 @@ final class ProjectStore: ObservableObject {
         let score = venueScanSession?.readinessScore ?? selectedProject?.venueScan.scanCoverageScore ?? 0
         let percentage = Int((score * 100).rounded())
         return "\(percentage)% ready"
+    }
+
+    func venueScanReadinessSummary() -> VenueScanReadinessSummary? {
+        if let venueScanSession {
+            return VenueScanReadinessAnalyzer.summarize(session: venueScanSession)
+        }
+
+        guard let venueScan = selectedProject?.venueScan else { return nil }
+        return VenueScanReadinessAnalyzer.summarize(venueScan: venueScan)
     }
 
     func planningRelocalizationLabel() -> String {

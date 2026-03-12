@@ -16,6 +16,7 @@
 - Layout analysis for bounding boxes and overlap detection
 - Shared chalking session state and tracking confidence models
 - AR boundary models for relocalization snapshots, local tracking assets, and diagnostics
+- Venue-scan readiness analysis for club-side capture robustness and handoff gating
 
 ### App shell
 - `Projects` tab:
@@ -31,6 +32,7 @@
   - View top-down placement preview
   - See basic overlap warnings
   - Run a mock venue-scan workflow
+  - See a club-facing capture gate with `lock for handoff` versus `save draft anyway`
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking
@@ -72,6 +74,7 @@
 - iOS-native share sheet polish beyond file export plumbing
 - Device signing configuration in `project.yml`
 - Physical iPhone validation
+- More explicit club-side guidance about where the strongest start edge and backup recovery edge physically are on the ground
 
 ## Recommended next step after context compaction
 Keep tightening the parent-facing execution loop:

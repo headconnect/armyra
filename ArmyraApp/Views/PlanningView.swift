@@ -70,6 +70,8 @@ struct PlanningView: View {
     }
 
     private func venueScanWorkspaceCard(for project: ProjectPackage) -> some View {
+        let scanReadiness = store.venueScanReadinessSummary()
+
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Venue Scan Workspace")
@@ -81,6 +83,41 @@ struct PlanningView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(.blue.opacity(0.12), in: Capsule())
+            }
+
+            if let scanReadiness {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Capture Gate")
+                            .font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Text(scanReadinessLabel(scanReadiness.level))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(scanReadinessColor(scanReadiness.level))
+                    }
+
+                    Text(scanReadiness.summary)
+                        .font(.subheadline)
+
+                    Text("Lock for handoff: \(scanReadiness.canLockForHandoff ? "yes" : "not yet")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text("Scan score: \(Int((scanReadiness.score * 100).rounded()))%")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(scanReadiness.issues) { issue in
+                        Label(
+                            issue.message,
+                            systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(issue.level == .needsWork ? .red : .orange)
+                    }
+                }
+                .padding()
+                .background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
 
             if let snapshot = store.planningTrackingSnapshot {
@@ -169,15 +206,29 @@ struct PlanningView: View {
                     }
                     .buttonStyle(.borderedProminent)
 
-                    Button("Save Scan") {
+                    Button("Lock for Handoff") {
                         store.finalizeVenueScanSession()
                     }
                     .buttonStyle(.bordered)
+                    .disabled(scanReadiness?.canLockForHandoff == false)
+
+                    if scanReadiness?.canLockForHandoff == false {
+                        Button("Save Draft Anyway") {
+                            store.finalizeVenueScanSession(forceDraftSave: true)
+                        }
+                        .buttonStyle(.bordered)
+                    }
 
                     Button("Discard") {
                         store.discardVenueScanSession()
                     }
                     .buttonStyle(.bordered)
+                }
+
+                if scanReadiness?.canLockForHandoff == false {
+                    Text("Draft saves are allowed for rehearsing the workflow, but they should not be handed to a first-time parent yet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             } else {
                 Text("Start a planning scan to rehearse the landmark capture and relocalization workflow before ARKit is wired in.")
@@ -546,6 +597,28 @@ struct PlanningView: View {
     }
 
     private func readinessColor(_ level: PlanningReadinessLevel) -> Color {
+        switch level {
+        case .ready:
+            return .green
+        case .caution:
+            return .orange
+        case .needsWork:
+            return .red
+        }
+    }
+
+    private func scanReadinessLabel(_ level: VenueScanReadinessLevel) -> String {
+        switch level {
+        case .ready:
+            return "Ready to lock"
+        case .caution:
+            return "Review capture"
+        case .needsWork:
+            return "More capture needed"
+        }
+    }
+
+    private func scanReadinessColor(_ level: VenueScanReadinessLevel) -> Color {
         switch level {
         case .ready:
             return .green
