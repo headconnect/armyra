@@ -23,6 +23,7 @@
 - Venue scans now also carry a named preferred start edge and backup recovery edge, so the club rep is handing off a concrete setup plan rather than only a generic relocalization score.
 - The planner can now review and change the suggested start/recovery edges before locking the scan, and readiness warns if both edges collapse to the same fallback.
 - Planning now also checks for narrow practical chalking lanes between adjacent pitches, so the club sees real setup-risk warnings beyond simple overlap.
+- Planning now also summarizes the best venue-level setup corridor across the whole arrangement, which starts to catch “no sensible approach lane through the ground” problems.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.

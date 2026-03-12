@@ -482,6 +482,12 @@ struct PlanningView: View {
             )
             .frame(height: 240)
 
+            if let corridorSummary = store.setupCorridorSummaryText() {
+                Label(corridorSummary, systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
             let overlaps = store.overlappingLayoutNames()
             let laneWarnings = store.practicalLaneWarnings()
             if overlaps.isEmpty {

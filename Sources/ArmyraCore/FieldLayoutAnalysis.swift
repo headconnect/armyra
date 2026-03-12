@@ -83,6 +83,27 @@ public struct LayoutLaneIssue: Equatable, Sendable {
     }
 }
 
+public enum SetupCorridorAxis: String, Codable, Equatable, Sendable {
+    case horizontal
+    case vertical
+}
+
+public struct VenueSetupCorridorSummary: Equatable, Sendable {
+    public var widestHorizontalBandMeters: Double
+    public var widestVerticalBandMeters: Double
+    public var preferredAxis: SetupCorridorAxis
+
+    public init(
+        widestHorizontalBandMeters: Double,
+        widestVerticalBandMeters: Double,
+        preferredAxis: SetupCorridorAxis
+    ) {
+        self.widestHorizontalBandMeters = widestHorizontalBandMeters
+        self.widestVerticalBandMeters = widestVerticalBandMeters
+        self.preferredAxis = preferredAxis
+    }
+}
+
 public enum FieldLayoutAnalysis {
     public static func boundingBox(for layout: FieldLayout) -> FieldBoundingBox {
         let geometry = FieldGeometryBuilder.build(for: layout)
@@ -202,6 +223,30 @@ public enum FieldLayoutAnalysis {
         return issues
     }
 
+    public static func setupCorridorSummary(in layouts: [FieldLayout]) -> VenueSetupCorridorSummary? {
+        let boxes = layouts.map { boundingBox(for: $0) }
+        guard let extent = FieldBoundingBox.union(boxes) else { return nil }
+
+        let widestVerticalBand = widestInternalGap(
+            in: boxes.map { ($0.minX, $0.maxX) },
+            lowerBound: extent.minX,
+            upperBound: extent.maxX
+        )
+        let widestHorizontalBand = widestInternalGap(
+            in: boxes.map { ($0.minY, $0.maxY) },
+            lowerBound: extent.minY,
+            upperBound: extent.maxY
+        )
+
+        let preferredAxis: SetupCorridorAxis = widestVerticalBand >= widestHorizontalBand ? .vertical : .horizontal
+
+        return VenueSetupCorridorSummary(
+            widestHorizontalBandMeters: widestHorizontalBand,
+            widestVerticalBandMeters: widestVerticalBand,
+            preferredAxis: preferredAxis
+        )
+    }
+
     private static func gapBetween(_ first: FieldBoundingBox, _ second: FieldBoundingBox) -> Double {
         let horizontalGap = max(0, max(second.minX - first.maxX, first.minX - second.maxX))
         let verticalGap = max(0, max(second.minY - first.maxY, first.minY - second.maxY))
@@ -216,5 +261,40 @@ public enum FieldLayoutAnalysis {
     ) -> Bool {
         first[keyPath: minKeyPath] < second[keyPath: maxKeyPath] &&
         first[keyPath: maxKeyPath] > second[keyPath: minKeyPath]
+    }
+
+    private static func widestInternalGap(
+        in intervals: [(Double, Double)],
+        lowerBound: Double,
+        upperBound: Double
+    ) -> Double {
+        guard intervals.isEmpty == false else { return upperBound - lowerBound }
+
+        let sorted = intervals.sorted { lhs, rhs in
+            if lhs.0 == rhs.0 {
+                return lhs.1 < rhs.1
+            }
+            return lhs.0 < rhs.0
+        }
+
+        var merged: [(Double, Double)] = []
+        for interval in sorted {
+            if let last = merged.last, interval.0 <= last.1 {
+                merged[merged.count - 1] = (last.0, max(last.1, interval.1))
+            } else {
+                merged.append(interval)
+            }
+        }
+
+        var widestGap = 0.0
+        var cursor = lowerBound
+
+        for interval in merged {
+            widestGap = max(widestGap, interval.0 - cursor)
+            cursor = max(cursor, interval.1)
+        }
+
+        widestGap = max(widestGap, upperBound - cursor)
+        return max(widestGap, 0)
     }
 }

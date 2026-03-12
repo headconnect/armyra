@@ -45,6 +45,7 @@ public enum PlanningReadinessAnalyzer {
         let overlaps = FieldLayoutAnalysis.overlaps(in: project.layouts)
         let closePairs = FieldLayoutAnalysis.tightSpacing(in: project.layouts, minimumGap: 4)
         let laneIssues = FieldLayoutAnalysis.practicalLaneIssues(in: project.layouts, minimumLaneWidth: 6)
+        let corridorSummary = FieldLayoutAnalysis.setupCorridorSummary(in: project.layouts)
         let venueScanReadiness = VenueScanReadinessAnalyzer.summarize(venueScan: project.venueScan)
         var issues: [PlanningReadinessIssue] = []
         var score = venueScanReadiness.score
@@ -92,6 +93,34 @@ public enum PlanningReadinessAnalyzer {
                 )
             )
             score -= 0.12
+        }
+
+        if let corridorSummary {
+            let bestCorridorWidth = max(
+                corridorSummary.widestHorizontalBandMeters,
+                corridorSummary.widestVerticalBandMeters
+            )
+
+            if bestCorridorWidth < 4 {
+                issues.append(
+                    PlanningReadinessIssue(
+                        message: "The overall layout leaves no meaningful setup corridor across the venue for trolleys or volunteers.",
+                        level: .needsWork
+                    )
+                )
+                score -= 0.2
+            } else if min(
+                corridorSummary.widestHorizontalBandMeters,
+                corridorSummary.widestVerticalBandMeters
+            ) < 3 {
+                issues.append(
+                    PlanningReadinessIssue(
+                        message: "The venue only has a usable setup corridor in one direction, which may complicate setup on busy days.",
+                        level: .caution
+                    )
+                )
+                score -= 0.08
+            }
         }
 
         if project.layouts.isEmpty {

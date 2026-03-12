@@ -483,6 +483,16 @@ final class ProjectStore: ObservableObject {
         }
     }
 
+    func setupCorridorSummaryText() -> String? {
+        guard let project = selectedProject,
+              let summary = FieldLayoutAnalysis.setupCorridorSummary(in: project.layouts) else {
+            return nil
+        }
+
+        let preferredAxis = summary.preferredAxis == .vertical ? "vertical" : "horizontal"
+        return "Best setup corridor: \(preferredAxis) \(Int(max(summary.widestVerticalBandMeters, summary.widestHorizontalBandMeters).rounded()))m"
+    }
+
     func planningReadinessSummary() -> PlanningReadinessSummary? {
         guard let project = selectedProject else { return nil }
         return PlanningReadinessAnalyzer.summarize(project: project)

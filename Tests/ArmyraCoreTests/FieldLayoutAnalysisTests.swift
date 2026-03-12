@@ -53,4 +53,23 @@ final class FieldLayoutAnalysisTests: XCTestCase {
         XCTAssertEqual(issues.first?.axis, .horizontal)
         XCTAssertEqual(issues.first?.laneWidthMeters ?? 0, 4, accuracy: 0.000_001)
     }
+
+    func testSetupCorridorSummaryFindsBestFreeBand() {
+        let template = FieldTemplateLibrary.fiveAside
+        let layouts = [
+            template.makeLayout(
+                named: "5A",
+                transform: FieldTransform(translation: Vector2D(dx: -25, dy: 0))
+            ),
+            template.makeLayout(
+                named: "5B",
+                transform: FieldTransform(translation: Vector2D(dx: 25, dy: 0))
+            ),
+        ]
+
+        let summary = FieldLayoutAnalysis.setupCorridorSummary(in: layouts)
+
+        XCTAssertEqual(summary?.preferredAxis, .vertical)
+        XCTAssertEqual(summary?.widestVerticalBandMeters ?? 0, 10, accuracy: 0.000_001)
+    }
 }
