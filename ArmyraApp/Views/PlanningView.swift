@@ -115,6 +115,18 @@ struct PlanningView: View {
                         .font(.subheadline)
                         .foregroundStyle(issue.level == .needsWork ? .red : .orange)
                     }
+
+                    if let venueScanSession = store.venueScanSession {
+                        preferredEdgeSummary(
+                            startEdge: venueScanSession.preferredStartEdge,
+                            recoveryEdge: venueScanSession.preferredRecoveryEdge
+                        )
+                    } else {
+                        preferredEdgeSummary(
+                            startEdge: project.venueScan.preferredStartEdge,
+                            recoveryEdge: project.venueScan.preferredRecoveryEdge
+                        )
+                    }
                 }
                 .padding()
                 .background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -170,6 +182,11 @@ struct PlanningView: View {
                 Text("Covered sides: \(session.coveredSides)/4")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+
+                preferredEdgeSummary(
+                    startEdge: session.preferredStartEdge,
+                    recoveryEdge: session.preferredRecoveryEdge
+                )
 
                 if session.capturedLandmarks.isEmpty {
                     Text("No landmarks captured yet.")
@@ -517,6 +534,11 @@ struct PlanningView: View {
             Text("\(project.venueScan.venueName) has \(project.venueScan.landmarkNotes.count) landmark notes and \(project.venueScan.recommendedRelocalizationHints.count) recovery hints.")
                 .foregroundStyle(.secondary)
 
+            preferredEdgeSummary(
+                startEdge: project.venueScan.preferredStartEdge,
+                recoveryEdge: project.venueScan.preferredRecoveryEdge
+            )
+
             ForEach(project.venueScan.landmarkNotes, id: \.self) { note in
                 Label(note, systemImage: "mappin.and.ellipse")
                     .font(.subheadline)
@@ -626,6 +648,21 @@ struct PlanningView: View {
             return .orange
         case .needsWork:
             return .red
+        }
+    }
+
+    @ViewBuilder
+    private func preferredEdgeSummary(startEdge: String?, recoveryEdge: String?) -> some View {
+        if let startEdge {
+            Label("Start edge: \(startEdge)", systemImage: "flag.fill")
+                .font(.subheadline)
+                .foregroundStyle(.blue)
+        }
+
+        if let recoveryEdge {
+            Label("Recovery edge: \(recoveryEdge)", systemImage: "arrow.uturn.backward.circle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.orange)
         }
     }
 

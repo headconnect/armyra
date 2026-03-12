@@ -17,6 +17,7 @@
 - Shared chalking session state and tracking confidence models
 - AR boundary models for relocalization snapshots, local tracking assets, and diagnostics
 - Venue-scan readiness analysis for club-side capture robustness and handoff gating
+- Venue-scan metadata for named preferred start and recovery edges
 
 ### App shell
 - `Projects` tab:
@@ -33,6 +34,7 @@
   - See basic overlap warnings
   - Run a mock venue-scan workflow
   - See a club-facing capture gate with `lock for handoff` versus `save draft anyway`
+  - See the suggested preferred start edge and backup recovery edge during capture and after save
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking
@@ -74,13 +76,13 @@
 - iOS-native share sheet polish beyond file export plumbing
 - Device signing configuration in `project.yml`
 - Physical iPhone validation
-- More explicit club-side guidance about where the strongest start edge and backup recovery edge physically are on the ground
+- Planner-side editing of the auto-suggested start/recovery edges before handoff lock
 
 ## Recommended next step after context compaction
-Keep tightening the parent-facing execution loop:
-- Add stronger planner validation around low-confidence venue scans and impractical pitch spacing
-- Make the chalking view communicate start/recovery/active-line context even more clearly than the current text-plus-preview approach
-- Continue replacing manual chalking progression with live AR-driven guidance state as device testing becomes possible
+Keep tightening the club-side handoff quality:
+- Let the rep review and adjust the suggested start edge and backup recovery edge before locking the scan
+- Add stronger multi-pitch practicality checks beyond overlap, especially around setup room and likely chalking lanes
+- Continue replacing generic capture success with more operational `safe to hand off` criteria as device testing becomes possible
 
 ## Signing note
 - Apple Developer enrollment appears to be in progress, but the repo is ready for the next signing step once a real Team ID is available.

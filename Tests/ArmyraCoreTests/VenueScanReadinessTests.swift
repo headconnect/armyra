@@ -27,6 +27,8 @@ final class VenueScanReadinessTests: XCTestCase {
                 "Start from the west fence side.",
                 "If tracking softens, return toward the clubhouse side."
             ],
+            preferredStartEdge: "West fence side",
+            preferredRecoveryEdge: "Clubhouse side",
             scanCoverageScore: 0.9
         )
 

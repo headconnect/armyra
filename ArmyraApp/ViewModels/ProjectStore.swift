@@ -216,6 +216,8 @@ final class ProjectStore: ObservableObject {
                 venueName: project.venueScan.venueName,
                 landmarkNotes: project.venueScan.landmarkNotes,
                 recommendedRelocalizationHints: project.venueScan.recommendedRelocalizationHints,
+                preferredStartEdge: project.venueScan.preferredStartEdge,
+                preferredRecoveryEdge: project.venueScan.preferredRecoveryEdge,
                 scanCoverageScore: project.venueScan.scanCoverageScore,
                 worldMapData: project.venueScan.worldMapData
             ),
@@ -613,6 +615,8 @@ final class ProjectStore: ObservableObject {
             venueName: original.venueName,
             landmarkNotes: session.capturedLandmarks,
             recommendedRelocalizationHints: [session.recommendedHint],
+            preferredStartEdge: session.preferredStartEdge,
+            preferredRecoveryEdge: session.preferredRecoveryEdge,
             scanCoverageScore: session.readinessScore,
             worldMapData: original.worldMapData
         )
@@ -656,6 +660,8 @@ final class ProjectStore: ObservableObject {
                     "Start next to the west fence for the strongest relocalization",
                     "If tracking drifts, turn the trolley toward the clubhouse and rescan"
                 ],
+                preferredStartEdge: "West fence line",
+                preferredRecoveryEdge: "Clubhouse side",
                 scanCoverageScore: 0.78
             ),
             templates: [fiveTemplate, sevenTemplate],

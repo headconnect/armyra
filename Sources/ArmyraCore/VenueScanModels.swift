@@ -11,6 +11,8 @@ public struct VenueScanSessionState: Equatable, Sendable {
     public var venueName: String
     public var capturedLandmarks: [String]
     public var coveredSides: Int
+    public var preferredStartEdge: String?
+    public var preferredRecoveryEdge: String?
     public var readinessScore: Double
     public var phase: VenueScanPhase
     public var recommendedHint: String
@@ -19,6 +21,8 @@ public struct VenueScanSessionState: Equatable, Sendable {
         venueName: String,
         capturedLandmarks: [String],
         coveredSides: Int,
+        preferredStartEdge: String? = nil,
+        preferredRecoveryEdge: String? = nil,
         readinessScore: Double,
         phase: VenueScanPhase,
         recommendedHint: String
@@ -26,6 +30,8 @@ public struct VenueScanSessionState: Equatable, Sendable {
         self.venueName = venueName
         self.capturedLandmarks = capturedLandmarks
         self.coveredSides = coveredSides
+        self.preferredStartEdge = preferredStartEdge
+        self.preferredRecoveryEdge = preferredRecoveryEdge
         self.readinessScore = readinessScore
         self.phase = phase
         self.recommendedHint = recommendedHint

@@ -46,6 +46,8 @@ public enum VenueScanReadinessAnalyzer {
         return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
+            hasPreferredStartEdge: session.preferredStartEdge?.isEmpty == false,
+            hasPreferredRecoveryEdge: session.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: session.readinessScore,
             relocalizationHintCount: derivedHintCount
         )
@@ -56,6 +58,8 @@ public enum VenueScanReadinessAnalyzer {
         return summarize(
             landmarkCount: venueScan.landmarkNotes.count,
             coveredSides: estimatedSides,
+            hasPreferredStartEdge: venueScan.preferredStartEdge?.isEmpty == false,
+            hasPreferredRecoveryEdge: venueScan.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: venueScan.scanCoverageScore,
             relocalizationHintCount: venueScan.recommendedRelocalizationHints.count
         )
@@ -64,6 +68,8 @@ public enum VenueScanReadinessAnalyzer {
     private static func summarize(
         landmarkCount: Int,
         coveredSides: Int,
+        hasPreferredStartEdge: Bool,
+        hasPreferredRecoveryEdge: Bool,
         readinessScore: Double,
         relocalizationHintCount: Int
     ) -> VenueScanReadinessSummary {
@@ -122,6 +128,26 @@ public enum VenueScanReadinessAnalyzer {
                 )
             )
             score -= 0.1
+        }
+
+        if !hasPreferredStartEdge {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "No preferred start edge has been identified yet. The club should name the strongest edge for initial relocalization.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
+        }
+
+        if !hasPreferredRecoveryEdge {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "No backup recovery edge has been identified yet. Parents need a clear place to return when tracking softens.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
         }
 
         if relocalizationHintCount < 2 {

@@ -11,6 +11,8 @@ final class ProjectPackageStoreTests: XCTestCase {
                 venueName: "North Field",
                 landmarkNotes: ["Fence on west side", "Lightpost at southeast corner"],
                 recommendedRelocalizationHints: ["Start near the clubhouse fence"],
+                preferredStartEdge: "West fence side",
+                preferredRecoveryEdge: "Lightpost corner",
                 scanCoverageScore: 0.72
             ),
             templates: [template],
@@ -30,6 +32,8 @@ final class ProjectPackageStoreTests: XCTestCase {
         XCTAssertEqual(decoded.projectName, package.projectName)
         XCTAssertEqual(decoded.layouts, package.layouts)
         XCTAssertEqual(decoded.venueScan.venueName, package.venueScan.venueName)
+        XCTAssertEqual(decoded.venueScan.preferredStartEdge, package.venueScan.preferredStartEdge)
+        XCTAssertEqual(decoded.venueScan.preferredRecoveryEdge, package.venueScan.preferredRecoveryEdge)
     }
 
     func testSuggestedFileNameSanitizesProjectName() {

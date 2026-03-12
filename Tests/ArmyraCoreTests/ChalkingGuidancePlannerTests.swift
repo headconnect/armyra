@@ -36,6 +36,8 @@ final class ChalkingGuidancePlannerTests: XCTestCase {
                     "Begin beside the clubhouse touchline.",
                     "Recover by facing the floodlight mast."
                 ],
+                preferredStartEdge: "Clubhouse touchline",
+                preferredRecoveryEdge: "Floodlight mast side",
                 scanCoverageScore: 0.82
             ),
             templates: [template],
@@ -45,7 +47,9 @@ final class ChalkingGuidancePlannerTests: XCTestCase {
         let preflight = ChalkingGuidancePlanner.makePreflight(project: project, layout: layout)
 
         XCTAssertEqual(preflight.readinessLevel, .high)
-        XCTAssertEqual(preflight.recoveryHint, "Recover by facing the floodlight mast.")
+        XCTAssertEqual(preflight.startHint, "Start from the clubhouse touchline before chalking.")
+        XCTAssertEqual(preflight.recoveryHint, "If tracking drifts, return toward the floodlight mast side and relocalize.")
+        XCTAssertTrue(preflight.checklist.contains("Set up on the clubhouse touchline."))
         XCTAssertTrue(preflight.checklist.contains("Begin from the top-right corner reference."))
         XCTAssertNil(preflight.warning)
     }

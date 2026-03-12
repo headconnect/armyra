@@ -133,6 +133,8 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
     public var venueName: String
     public var landmarkNotes: [String]
     public var recommendedRelocalizationHints: [String]
+    public var preferredStartEdge: String?
+    public var preferredRecoveryEdge: String?
     public var scanCoverageScore: Double
     public var worldMapData: Data?
 
@@ -141,6 +143,8 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
         venueName: String,
         landmarkNotes: [String],
         recommendedRelocalizationHints: [String],
+        preferredStartEdge: String? = nil,
+        preferredRecoveryEdge: String? = nil,
         scanCoverageScore: Double,
         worldMapData: Data? = nil
     ) {
@@ -148,6 +152,8 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
         self.venueName = venueName
         self.landmarkNotes = landmarkNotes
         self.recommendedRelocalizationHints = recommendedRelocalizationHints
+        self.preferredStartEdge = preferredStartEdge
+        self.preferredRecoveryEdge = preferredRecoveryEdge
         self.scanCoverageScore = scanCoverageScore
         self.worldMapData = worldMapData
     }

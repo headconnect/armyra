@@ -34,16 +34,21 @@ public enum ChalkingGuidancePlanner {
         layout: FieldLayout
     ) -> ChalkingPreflight {
         let readinessLevel = readinessLevel(for: project.venueScan)
-        let startHint = project.venueScan.recommendedRelocalizationHints.first
+        let startHint = project.venueScan.preferredStartEdge.map {
+            "Start from \(edgePhrase($0)) before chalking."
+        } ?? project.venueScan.recommendedRelocalizationHints.first
             ?? "Start from the strongest landmark edge before chalking."
-        let recoveryHint = project.venueScan.recommendedRelocalizationHints.dropFirst().first
+        let recoveryHint = project.venueScan.preferredRecoveryEdge.map {
+            "If tracking drifts, return toward \(edgePhrase($0)) and relocalize."
+        } ?? project.venueScan.recommendedRelocalizationHints.dropFirst().first
             ?? "If tracking drifts, turn back toward a known landmark edge and relocalize."
 
         let checklist = [
             "Mount the phone securely to the chalking trolley.",
+            "Set up on \(project.venueScan.preferredStartEdge.map(edgePhrase) ?? "the strongest landmark edge").",
             "Begin from \(startReference(for: layout.lockMode)).",
             "Chalk the outer perimeter before interior markings.",
-            "If tracking softens, slow down and look back toward known landmarks."
+            "If tracking softens, head back toward \(project.venueScan.preferredRecoveryEdge.map(edgePhrase) ?? "the recovery edge") and look back toward known landmarks."
         ]
 
         return ChalkingPreflight(
@@ -97,5 +102,14 @@ public enum ChalkingGuidancePlanner {
                 return "the bottom-right corner reference"
             }
         }
+    }
+
+    private static func edgePhrase(_ label: String) -> String {
+        let normalized = label.lowercased()
+        if normalized.contains(" side") || normalized.contains(" touchline") || normalized.contains(" edge") {
+            return "the \(normalized)"
+        }
+
+        return "the \(normalized) side"
     }
 }

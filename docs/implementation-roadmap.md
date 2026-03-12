@@ -20,6 +20,7 @@
 - Planning now produces a handoff-oriented readiness summary, and both planning and chalking can render a shared chalk-path preview with the active line highlighted in context.
 - The shared chalk-path preview now also carries explicit start and recovery markers, pushing the parent UX closer to a glanceable field-day workflow instead of a diagnostics-first prototype.
 - The venue scan workspace now has a club-facing capture gate that distinguishes `lock for handoff` from `save draft anyway`, with explicit issues around thin landmarks, one-sided coverage, and weak recovery setup.
+- Venue scans now also carry a named preferred start edge and backup recovery edge, so the club rep is handing off a concrete setup plan rather than only a generic relocalization score.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
@@ -32,6 +33,7 @@ The current development focus is to make the handoff from club rep to parent fee
 ### Next after this slice
 - Add clearer planner validation around practical spacing and low-confidence venue scans so `ready for chalking` means something operationally.
 - Deepen the club capture checklist with more explicit re-entry zone language and stronger multi-pitch practicality checks before handoff.
+- Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Keep turning chalking into a recovery-first workflow by surfacing recovery targets, start-edge cues, and trusted/not-trusted guidance states directly in the main UI.
 - Feed more of the chalking progression from live AR status so the simulator controls become an escape hatch rather than the main interaction.
 
