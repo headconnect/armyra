@@ -46,6 +46,8 @@ public enum VenueScanReadinessAnalyzer {
         return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
+            startEdgeLabel: session.preferredStartEdge,
+            recoveryEdgeLabel: session.preferredRecoveryEdge,
             hasPreferredStartEdge: session.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: session.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: session.readinessScore,
@@ -58,6 +60,8 @@ public enum VenueScanReadinessAnalyzer {
         return summarize(
             landmarkCount: venueScan.landmarkNotes.count,
             coveredSides: estimatedSides,
+            startEdgeLabel: venueScan.preferredStartEdge,
+            recoveryEdgeLabel: venueScan.preferredRecoveryEdge,
             hasPreferredStartEdge: venueScan.preferredStartEdge?.isEmpty == false,
             hasPreferredRecoveryEdge: venueScan.preferredRecoveryEdge?.isEmpty == false,
             readinessScore: venueScan.scanCoverageScore,
@@ -68,6 +72,8 @@ public enum VenueScanReadinessAnalyzer {
     private static func summarize(
         landmarkCount: Int,
         coveredSides: Int,
+        startEdgeLabel: String?,
+        recoveryEdgeLabel: String?,
         hasPreferredStartEdge: Bool,
         hasPreferredRecoveryEdge: Bool,
         readinessScore: Double,
@@ -144,6 +150,17 @@ public enum VenueScanReadinessAnalyzer {
             issues.append(
                 VenueScanReadinessIssue(
                     message: "No backup recovery edge has been identified yet. Parents need a clear place to return when tracking softens.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
+        }
+
+        if let startEdgeLabel, let recoveryEdgeLabel,
+           startEdgeLabel.caseInsensitiveCompare(recoveryEdgeLabel) == .orderedSame {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "The start edge and recovery edge are the same. Pick a separate backup edge so recovery is more practical.",
                     level: .caution
                 )
             )

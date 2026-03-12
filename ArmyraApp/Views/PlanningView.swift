@@ -188,6 +188,44 @@ struct PlanningView: View {
                     recoveryEdge: session.preferredRecoveryEdge
                 )
 
+                if !store.availableVenueScanEdgeOptions().isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Review Handoff Edges")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Menu {
+                            ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
+                                Button(edge) {
+                                    store.updateVenueScanPreferredStartEdge(edge)
+                                }
+                            }
+                        } label: {
+                            Label(
+                                "Start edge: \(session.preferredStartEdge ?? "Choose edge")",
+                                systemImage: "flag.fill"
+                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.bordered)
+
+                        Menu {
+                            ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
+                                Button(edge) {
+                                    store.updateVenueScanPreferredRecoveryEdge(edge)
+                                }
+                            }
+                        } label: {
+                            Label(
+                                "Recovery edge: \(session.preferredRecoveryEdge ?? "Choose edge")",
+                                systemImage: "arrow.uturn.backward.circle.fill"
+                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+
                 if session.capturedLandmarks.isEmpty {
                     Text("No landmarks captured yet.")
                         .font(.subheadline)

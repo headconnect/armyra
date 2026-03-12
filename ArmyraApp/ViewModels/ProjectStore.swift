@@ -266,6 +266,34 @@ final class ProjectStore: ObservableObject {
         recordPlanningDiagnostics(.refreshed)
     }
 
+    func updateVenueScanPreferredStartEdge(_ edge: String) {
+        guard let venueScanSession, let project = selectedProject else { return }
+        let updatedSession = venueScanService.updatePreferredEdges(
+            startEdge: edge,
+            recoveryEdge: venueScanSession.preferredRecoveryEdge,
+            session: venueScanSession
+        )
+        self.venueScanSession = updatedSession
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+            for: venueScanDraft(session: updatedSession, original: project.venueScan)
+        )
+        recordPlanningDiagnostics(.refreshed)
+    }
+
+    func updateVenueScanPreferredRecoveryEdge(_ edge: String) {
+        guard let venueScanSession, let project = selectedProject else { return }
+        let updatedSession = venueScanService.updatePreferredEdges(
+            startEdge: venueScanSession.preferredStartEdge,
+            recoveryEdge: edge,
+            session: venueScanSession
+        )
+        self.venueScanSession = updatedSession
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+            for: venueScanDraft(session: updatedSession, original: project.venueScan)
+        )
+        recordPlanningDiagnostics(.refreshed)
+    }
+
     func advanceVenueCoverage() {
         guard let venueScanSession, let project = selectedProject else { return }
         let updatedSession = venueScanService.advanceCoverage(session: venueScanSession)
@@ -571,6 +599,14 @@ final class ProjectStore: ObservableObject {
             "Car park entrance",
             "Bench shelter"
         ]
+    }
+
+    func availableVenueScanEdgeOptions() -> [String] {
+        if let venueScanSession {
+            return venueScanSession.capturedLandmarks
+        }
+
+        return selectedProject?.venueScan.landmarkNotes ?? []
     }
 
     private func recordPlanningDiagnostics(_ kind: ARDiagnosticsEventKind) {

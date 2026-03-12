@@ -38,4 +38,23 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertTrue(summary.canLockForHandoff)
         XCTAssertTrue(summary.issues.isEmpty)
     }
+
+    func testSameStartAndRecoveryEdgeProducesCaution() {
+        let session = VenueScanSessionState(
+            venueName: "South Ground",
+            capturedLandmarks: ["West fence", "Clubhouse", "Floodlight mast", "House roof"],
+            coveredSides: 3,
+            preferredStartEdge: "West fence",
+            preferredRecoveryEdge: "West fence",
+            readinessScore: 0.86,
+            phase: .ready,
+            recommendedHint: "Use the west fence edge."
+        )
+
+        let summary = VenueScanReadinessAnalyzer.summarize(session: session)
+
+        XCTAssertEqual(summary.level, .caution)
+        XCTAssertFalse(summary.canLockForHandoff)
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("same") }))
+    }
 }
