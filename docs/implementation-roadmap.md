@@ -4,7 +4,7 @@
 - Core geometry, template, validation, and package persistence exist and pass CI.
 - A minimal SwiftUI app shell exists for `Projects`, `Planning`, and `Chalking`.
 - GitHub Actions now runs package tests, generates the Xcode project, builds the iOS simulator app, and uploads the artifact.
-- GitHub Actions now also runs a screenshot UI-test pass and uploads PNG screenshots of key app flows, so UI verification is possible without a local Mac build.
+- GitHub Actions now also runs a screenshot UI-test pass, exports screenshot attachments from the simulator test result bundle, and uploads PNG screenshots of key app flows, so UI verification is possible without a local Mac build.
 - The planning workspace can now create layouts from templates, inspect export payloads, and edit selected layout dimensions, offsets, rotation, and lock mode.
 - The app now has basic `*.armyrafield` import/export plumbing and project duplication support, which moves it closer to real device testing once Apple signing is configured.
 - The planning screen now includes a top-down layout preview and basic overlap detection so placement changes can be reasoned about without AR.
@@ -66,6 +66,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Connect export UI to iOS share sheet and Files integration.
 - Once an Apple development team is configured in the project, validate package import/export and planning flows on a physical iPhone.
 - Keep CI screenshots current so planning and chalking UI regressions are visible even before device deployment is available.
+- Treat CI screenshots as part of build verification, alongside package tests and simulator app builds, so visual regressions are caught in the same loop as functional breakages.
 
 ### Milestone 3: AR services
 - Introduce a venue scan service abstraction that can later wrap `ARKit`/`ARWorldMap`.

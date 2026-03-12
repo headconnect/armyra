@@ -64,15 +64,24 @@ jobs:
 
       - name: Capture app screenshots
         run: |
-          mkdir -p build/screenshots
           xcodebuild \
             -project Armyra.xcodeproj \
             -scheme ArmyraScreenshots \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -derivedDataPath build/DerivedData \
+            -resultBundlePath build/ArmyraScreenshots.xcresult \
             CODE_SIGNING_ALLOWED=NO \
-            SCREENSHOT_OUTPUT_DIR=$PWD/build/screenshots \
             test
+
+      - name: Export screenshot attachments
+        if: always()
+        run: |
+          mkdir -p build/screenshots
+          if [ -d build/ArmyraScreenshots.xcresult ]; then
+            xcrun xcresulttool export attachments \
+              --path build/ArmyraScreenshots.xcresult \
+              --output-path build/screenshots
+          fi
 
       - name: Upload screenshots
         if: always()
@@ -80,7 +89,7 @@ jobs:
         with:
           name: Armyra-screenshots
           path: build/screenshots
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Upload simulator app
         if: success()

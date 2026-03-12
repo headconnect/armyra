@@ -11,31 +11,23 @@ final class ArmyraScreenshotTests: XCTestCase {
             app.launchEnvironment["ARMYRA_SCREENSHOT_SCENE"] = scenario.sceneName
             app.launch()
 
+            scenario.prepareForCapture(in: app)
             XCTAssertTrue(
                 scenario.readinessElement(in: app).waitForExistence(timeout: 10),
                 "Expected \(scenario.expectedLabel) screen to be visible for screenshot capture."
             )
 
-            try saveScreenshot(for: scenario, app: app)
+            saveScreenshot(for: scenario)
             app.terminate()
         }
     }
 
-    private func saveScreenshot(for scenario: ScreenshotScenario, app: XCUIApplication) throws {
+    private func saveScreenshot(for scenario: ScreenshotScenario) {
         let screenshot = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = scenario.fileName
         attachment.lifetime = .keepAlways
         add(attachment)
-
-        guard let outputDirectory = ProcessInfo.processInfo.environment["SCREENSHOT_OUTPUT_DIR"] else {
-            return
-        }
-
-        let directoryURL = URL(fileURLWithPath: outputDirectory, isDirectory: true)
-        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
-        let screenshotURL = directoryURL.appendingPathComponent("\(scenario.fileName).png")
-        try screenshot.pngRepresentation.write(to: screenshotURL)
     }
 }
 
@@ -87,6 +79,17 @@ private enum ScreenshotScenario: CaseIterable {
         }
     }
 
+    func prepareForCapture(in app: XCUIApplication) {
+        guard self == .chalkingActive else { return }
+
+        let endButton = app.buttons["End Session"]
+        var attempts = 0
+        while !endButton.exists && attempts < 6 {
+            app.swipeUp()
+            attempts += 1
+        }
+    }
+
     func readinessElement(in app: XCUIApplication) -> XCUIElement {
         switch self {
         case .projects:
@@ -98,7 +101,7 @@ private enum ScreenshotScenario: CaseIterable {
         case .chalking:
             return app.navigationBars["Chalking"]
         case .chalkingActive:
-            return app.buttons["Refresh Live Status"]
+            return app.buttons["End Session"]
         }
     }
 }
