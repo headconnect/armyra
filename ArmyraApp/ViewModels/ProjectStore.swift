@@ -215,6 +215,7 @@ final class ProjectStore: ObservableObject {
             venueScan: VenueScan(
                 venueName: project.venueScan.venueName,
                 landmarkNotes: project.venueScan.landmarkNotes,
+                landmarks: project.venueScan.landmarks,
                 recommendedRelocalizationHints: project.venueScan.recommendedRelocalizationHints,
                 preferredStartEdge: project.venueScan.preferredStartEdge,
                 preferredRecoveryEdge: project.venueScan.preferredRecoveryEdge,
@@ -259,6 +260,20 @@ final class ProjectStore: ObservableObject {
     func captureVenueLandmark(_ landmark: String) {
         guard let venueScanSession, let project = selectedProject else { return }
         let updatedSession = venueScanService.captureLandmark(landmark, session: venueScanSession)
+        self.venueScanSession = updatedSession
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+            for: venueScanDraft(session: updatedSession, original: project.venueScan)
+        )
+        recordPlanningDiagnostics(.refreshed)
+    }
+
+    func updateVenueLandmarkRole(_ landmark: String, role: LandmarkRole) {
+        guard let venueScanSession, let project = selectedProject else { return }
+        let updatedSession = venueScanService.updateLandmarkRole(
+            landmark: landmark,
+            role: role,
+            session: venueScanSession
+        )
         self.venueScanSession = updatedSession
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
             for: venueScanDraft(session: updatedSession, original: project.venueScan)
@@ -641,6 +656,19 @@ final class ProjectStore: ObservableObject {
         return selectedProject?.venueScan.landmarkNotes ?? []
     }
 
+    func landmarkRole(for label: String) -> LandmarkRole {
+        if let venueScanSession,
+           let landmark = venueScanSession.landmarks.first(where: { $0.label == label }) {
+            return landmark.role
+        }
+
+        if let landmark = selectedProject?.venueScan.landmarks.first(where: { $0.label == label }) {
+            return landmark.role
+        }
+
+        return .general
+    }
+
     private func recordPlanningDiagnostics(_ kind: ARDiagnosticsEventKind) {
         guard let diagnostics = planningDiagnostics() else { return }
         appendDiagnosticsEvent(
@@ -682,6 +710,7 @@ final class ProjectStore: ObservableObject {
             id: original.id,
             venueName: original.venueName,
             landmarkNotes: session.capturedLandmarks,
+            landmarks: session.landmarks,
             recommendedRelocalizationHints: [session.recommendedHint],
             preferredStartEdge: session.preferredStartEdge,
             preferredRecoveryEdge: session.preferredRecoveryEdge,
@@ -723,6 +752,11 @@ final class ProjectStore: ObservableObject {
                     "Fence line on the west touchline",
                     "Clubhouse roof behind the south goal",
                     "Floodlight mast near the corner flag"
+                ],
+                landmarks: [
+                    VenueLandmark(label: "Fence line on the west touchline", role: .startCandidate),
+                    VenueLandmark(label: "Clubhouse roof behind the south goal", role: .recoveryCandidate),
+                    VenueLandmark(label: "Floodlight mast near the corner flag", role: .general),
                 ],
                 recommendedRelocalizationHints: [
                     "Start next to the west fence for the strongest relocalization",

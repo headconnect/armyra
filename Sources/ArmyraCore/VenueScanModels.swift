@@ -10,6 +10,7 @@ public enum VenueScanPhase: String, Codable, CaseIterable, Sendable {
 public struct VenueScanSessionState: Equatable, Sendable {
     public var venueName: String
     public var capturedLandmarks: [String]
+    public var landmarks: [VenueLandmark]
     public var coveredSides: Int
     public var preferredStartEdge: String?
     public var preferredRecoveryEdge: String?
@@ -20,6 +21,7 @@ public struct VenueScanSessionState: Equatable, Sendable {
     public init(
         venueName: String,
         capturedLandmarks: [String],
+        landmarks: [VenueLandmark] = [],
         coveredSides: Int,
         preferredStartEdge: String? = nil,
         preferredRecoveryEdge: String? = nil,
@@ -29,6 +31,7 @@ public struct VenueScanSessionState: Equatable, Sendable {
     ) {
         self.venueName = venueName
         self.capturedLandmarks = capturedLandmarks
+        self.landmarks = landmarks
         self.coveredSides = coveredSides
         self.preferredStartEdge = preferredStartEdge
         self.preferredRecoveryEdge = preferredRecoveryEdge

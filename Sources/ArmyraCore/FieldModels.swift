@@ -28,6 +28,24 @@ public enum PlacementLockMode: Codable, Equatable, Sendable {
     }
 }
 
+public enum LandmarkRole: String, Codable, CaseIterable, Sendable {
+    case general
+    case startCandidate
+    case recoveryCandidate
+}
+
+public struct VenueLandmark: Codable, Equatable, Identifiable, Sendable {
+    public var id: UUID
+    public var label: String
+    public var role: LandmarkRole
+
+    public init(id: UUID = UUID(), label: String, role: LandmarkRole = .general) {
+        self.id = id
+        self.label = label
+        self.role = role
+    }
+}
+
 public struct PitchDimensions: Codable, Equatable, Sendable {
     public var lengthMeters: Double
     public var widthMeters: Double
@@ -132,6 +150,7 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var venueName: String
     public var landmarkNotes: [String]
+    public var landmarks: [VenueLandmark]
     public var recommendedRelocalizationHints: [String]
     public var preferredStartEdge: String?
     public var preferredRecoveryEdge: String?
@@ -142,6 +161,7 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
         id: UUID = UUID(),
         venueName: String,
         landmarkNotes: [String],
+        landmarks: [VenueLandmark] = [],
         recommendedRelocalizationHints: [String],
         preferredStartEdge: String? = nil,
         preferredRecoveryEdge: String? = nil,
@@ -151,6 +171,7 @@ public struct VenueScan: Codable, Equatable, Identifiable, Sendable {
         self.id = id
         self.venueName = venueName
         self.landmarkNotes = landmarkNotes
+        self.landmarks = landmarks
         self.recommendedRelocalizationHints = recommendedRelocalizationHints
         self.preferredStartEdge = preferredStartEdge
         self.preferredRecoveryEdge = preferredRecoveryEdge

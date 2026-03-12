@@ -232,8 +232,29 @@ struct PlanningView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(session.capturedLandmarks, id: \.self) { landmark in
-                        Label(landmark, systemImage: "mappin.and.ellipse")
-                            .font(.subheadline)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label(landmark, systemImage: "mappin.and.ellipse")
+                                .font(.subheadline)
+
+                            Menu {
+                                Button("General landmark") {
+                                    store.updateVenueLandmarkRole(landmark, role: .general)
+                                }
+                                Button("Start-side candidate") {
+                                    store.updateVenueLandmarkRole(landmark, role: .startCandidate)
+                                }
+                                Button("Recovery-side candidate") {
+                                    store.updateVenueLandmarkRole(landmark, role: .recoveryCandidate)
+                                }
+                            } label: {
+                                Label(
+                                    roleLabel(for: store.landmarkRole(for: landmark)),
+                                    systemImage: "tag.fill"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
                 }
 
@@ -728,6 +749,17 @@ struct PlanningView: View {
             Label("Recovery edge: \(recoveryEdge)", systemImage: "arrow.uturn.backward.circle.fill")
                 .font(.subheadline)
                 .foregroundStyle(.orange)
+        }
+    }
+
+    private func roleLabel(for role: LandmarkRole) -> String {
+        switch role {
+        case .general:
+            return "General landmark"
+        case .startCandidate:
+            return "Start-side candidate"
+        case .recoveryCandidate:
+            return "Recovery-side candidate"
         }
     }
 

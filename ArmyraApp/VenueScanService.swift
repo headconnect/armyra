@@ -5,6 +5,11 @@ protocol VenueScanService {
     func startSession(for venueScan: VenueScan) -> VenueScanSessionState
     func captureLandmark(_ landmark: String, session: VenueScanSessionState) -> VenueScanSessionState
     func advanceCoverage(session: VenueScanSessionState) -> VenueScanSessionState
+    func updateLandmarkRole(
+        landmark: String,
+        role: LandmarkRole,
+        session: VenueScanSessionState
+    ) -> VenueScanSessionState
     func updatePreferredEdges(
         startEdge: String?,
         recoveryEdge: String?,
@@ -18,6 +23,7 @@ struct MockVenueScanService: VenueScanService {
         makeSession(
             venueName: venueScan.venueName,
             capturedLandmarks: venueScan.landmarkNotes,
+            landmarks: venueScan.landmarks,
             coveredSides: max(1, min(Int(round(venueScan.scanCoverageScore * 4)), 4)),
             preferredStartEdgeOverride: venueScan.preferredStartEdge,
             preferredRecoveryEdgeOverride: venueScan.preferredRecoveryEdge,
@@ -30,10 +36,15 @@ struct MockVenueScanService: VenueScanService {
         if !capturedLandmarks.contains(landmark) {
             capturedLandmarks.append(landmark)
         }
+        var landmarks = session.landmarks
+        if !landmarks.contains(where: { $0.label == landmark }) {
+            landmarks.append(VenueLandmark(label: landmark))
+        }
 
         return makeSession(
             venueName: session.venueName,
             capturedLandmarks: capturedLandmarks,
+            landmarks: landmarks,
             coveredSides: min(max(session.coveredSides, 1), 4),
             preferredStartEdgeOverride: session.preferredStartEdge,
             preferredRecoveryEdgeOverride: session.preferredRecoveryEdge,
@@ -45,9 +56,31 @@ struct MockVenueScanService: VenueScanService {
         return makeSession(
             venueName: session.venueName,
             capturedLandmarks: session.capturedLandmarks,
+            landmarks: session.landmarks,
             coveredSides: min(session.coveredSides + 1, 4),
             preferredStartEdgeOverride: session.preferredStartEdge,
             preferredRecoveryEdgeOverride: session.preferredRecoveryEdge,
+            fallbackHint: session.recommendedHint
+        )
+    }
+
+    func updateLandmarkRole(
+        landmark: String,
+        role: LandmarkRole,
+        session: VenueScanSessionState
+    ) -> VenueScanSessionState {
+        let updatedLandmarks = session.landmarks.map { savedLandmark in
+            guard savedLandmark.label == landmark else { return savedLandmark }
+            return VenueLandmark(id: savedLandmark.id, label: savedLandmark.label, role: role)
+        }
+
+        return makeSession(
+            venueName: session.venueName,
+            capturedLandmarks: session.capturedLandmarks,
+            landmarks: updatedLandmarks,
+            coveredSides: session.coveredSides,
+            preferredStartEdgeOverride: role == .startCandidate ? landmark : session.preferredStartEdge,
+            preferredRecoveryEdgeOverride: role == .recoveryCandidate ? landmark : session.preferredRecoveryEdge,
             fallbackHint: session.recommendedHint
         )
     }
@@ -60,6 +93,7 @@ struct MockVenueScanService: VenueScanService {
         makeSession(
             venueName: session.venueName,
             capturedLandmarks: session.capturedLandmarks,
+            landmarks: session.landmarks,
             coveredSides: session.coveredSides,
             preferredStartEdgeOverride: startEdge,
             preferredRecoveryEdgeOverride: recoveryEdge,
@@ -72,6 +106,7 @@ struct MockVenueScanService: VenueScanService {
             id: original.id,
             venueName: original.venueName,
             landmarkNotes: session.capturedLandmarks,
+            landmarks: session.landmarks,
             recommendedRelocalizationHints: buildRelocalizationHints(for: session),
             preferredStartEdge: session.preferredStartEdge,
             preferredRecoveryEdge: session.preferredRecoveryEdge,
@@ -83,6 +118,7 @@ struct MockVenueScanService: VenueScanService {
     private func makeSession(
         venueName: String,
         capturedLandmarks: [String],
+        landmarks: [VenueLandmark],
         coveredSides: Int,
         preferredStartEdgeOverride: String? = nil,
         preferredRecoveryEdgeOverride: String? = nil,
@@ -92,13 +128,15 @@ struct MockVenueScanService: VenueScanService {
         let sideScore = Double(coveredSides) / 4
         let readinessScore = min((landmarkScore * 0.55) + (sideScore * 0.45), 1)
         let phase: VenueScanPhase = readinessScore >= 0.8 && coveredSides >= 3 && capturedLandmarks.count >= 4 ? .ready : .scanning
-        let preferredStartEdge = preferredStartEdgeOverride ?? capturedLandmarks.first
-        let defaultRecoveryEdge = coveredSides >= 2 ? capturedLandmarks.dropFirst().first ?? capturedLandmarks.first : nil
+        let preferredStartEdge = preferredStartEdgeOverride ?? landmarks.first(where: { $0.role == .startCandidate })?.label ?? capturedLandmarks.first
+        let defaultRecoveryEdge = landmarks.first(where: { $0.role == .recoveryCandidate })?.label
+            ?? (coveredSides >= 2 ? capturedLandmarks.dropFirst().first ?? capturedLandmarks.first : nil)
         let preferredRecoveryEdge = preferredRecoveryEdgeOverride ?? defaultRecoveryEdge
 
         return VenueScanSessionState(
             venueName: venueName,
             capturedLandmarks: capturedLandmarks,
+            landmarks: landmarks,
             coveredSides: coveredSides,
             preferredStartEdge: preferredStartEdge,
             preferredRecoveryEdge: preferredRecoveryEdge,

@@ -10,6 +10,10 @@ final class ProjectPackageStoreTests: XCTestCase {
             venueScan: VenueScan(
                 venueName: "North Field",
                 landmarkNotes: ["Fence on west side", "Lightpost at southeast corner"],
+                landmarks: [
+                    VenueLandmark(label: "Fence on west side", role: .startCandidate),
+                    VenueLandmark(label: "Lightpost at southeast corner", role: .recoveryCandidate),
+                ],
                 recommendedRelocalizationHints: ["Start near the clubhouse fence"],
                 preferredStartEdge: "West fence side",
                 preferredRecoveryEdge: "Lightpost corner",
@@ -32,6 +36,7 @@ final class ProjectPackageStoreTests: XCTestCase {
         XCTAssertEqual(decoded.projectName, package.projectName)
         XCTAssertEqual(decoded.layouts, package.layouts)
         XCTAssertEqual(decoded.venueScan.venueName, package.venueScan.venueName)
+        XCTAssertEqual(decoded.venueScan.landmarks, package.venueScan.landmarks)
         XCTAssertEqual(decoded.venueScan.preferredStartEdge, package.venueScan.preferredStartEdge)
         XCTAssertEqual(decoded.venueScan.preferredRecoveryEdge, package.venueScan.preferredRecoveryEdge)
     }
