@@ -624,6 +624,18 @@ final class ProjectStore: ObservableObject {
         return "Next capture pass: add a durable landmark on the \(suggestedZones) side of the venue."
     }
 
+    func venueDurabilityGuidanceText() -> String? {
+        guard let summary = venueScanReadinessSummary(),
+              !summary.suggestedCaptureKinds.isEmpty,
+              summary.inferableLandmarkCount > 0,
+              summary.inferredLandmarkKindCount <= 2 else {
+            return nil
+        }
+
+        let suggestedKinds = summary.suggestedCaptureKinds.prefix(2).joined(separator: " or ")
+        return "Prefer a different landmark type next, such as a \(suggestedKinds)."
+    }
+
     func planningRelocalizationLabel() -> String {
         relocalizationLabel(for: planningTrackingSnapshot?.relocalizationState ?? .unavailable)
     }

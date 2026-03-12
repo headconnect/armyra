@@ -125,6 +125,12 @@ struct PlanningView: View {
                             .foregroundStyle(.secondary)
                     }
 
+                    if let durabilityGuidance = store.venueDurabilityGuidanceText() {
+                        Label(durabilityGuidance, systemImage: "building.columns")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     ForEach(scanReadiness.issues) { issue in
                         Label(
                             issue.message,

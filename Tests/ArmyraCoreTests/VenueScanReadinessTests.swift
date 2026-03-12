@@ -47,6 +47,7 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.startCandidateCount, 1)
         XCTAssertEqual(summary.recoveryCandidateCount, 1)
         XCTAssertEqual(summary.inferredLandmarkZoneCount, 4)
+        XCTAssertGreaterThanOrEqual(summary.inferredLandmarkKindCount, 4)
     }
 
     func testSameStartAndRecoveryEdgeProducesCaution() {
@@ -167,8 +168,11 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.level, .caution)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("clustered around one part") }))
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("same part of the venue") }))
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("same kind of object") }))
         XCTAssertEqual(summary.inferredLandmarkZoneCount, 1)
         XCTAssertTrue(summary.suggestedCaptureZones.contains("north"))
         XCTAssertTrue(summary.suggestedCaptureZones.contains("east"))
+        XCTAssertTrue(summary.suggestedCaptureKinds.contains("building"))
+        XCTAssertTrue(summary.suggestedCaptureKinds.contains("light post"))
     }
 }

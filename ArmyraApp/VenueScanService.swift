@@ -164,6 +164,7 @@ struct MockVenueScanService: VenueScanService {
         let hasStartCandidate = landmarks.contains(where: { $0.role == .startCandidate })
         let hasRecoveryCandidate = landmarks.contains(where: { $0.role == .recoveryCandidate })
         let recommendedZones = suggestedCaptureZones(from: landmarks)
+        let recommendedKinds = suggestedCaptureKinds(from: landmarks)
 
         if coveredSides <= 1 {
             return "Capture a second landmark-bearing edge before locking the scan. One-sided coverage is not robust enough."
@@ -172,6 +173,11 @@ struct MockVenueScanService: VenueScanService {
         if let recommendedZones, recommendedZones.isEmpty == false,
            inferredZoneCount(for: landmarks) <= 1 {
             return "Capture another durable reference on the \(recommendedZones) side before locking the scan."
+        }
+
+        if let recommendedKinds, recommendedKinds.isEmpty == false,
+           inferredKindCount(for: landmarks) <= 1 {
+            return "Capture a different kind of durable object next, such as a \(recommendedKinds), before locking the scan."
         }
 
         if !hasStartCandidate {
@@ -257,8 +263,26 @@ struct MockVenueScanService: VenueScanService {
         inferredZones(from: landmarks).count
     }
 
+    private func suggestedCaptureKinds(from landmarks: [VenueLandmark]) -> String? {
+        let kinds = inferredKinds(from: landmarks)
+        guard kinds.isEmpty == false else { return nil }
+
+        let durableKinds = ["fence", "building", "light post", "gate", "shelter"]
+        let missingKinds = durableKinds.filter { !kinds.contains($0) }
+        guard missingKinds.isEmpty == false else { return nil }
+        return missingKinds.prefix(2).joined(separator: " or ")
+    }
+
+    private func inferredKindCount(for landmarks: [VenueLandmark]) -> Int {
+        inferredKinds(from: landmarks).count
+    }
+
     private func inferredZones(from landmarks: [VenueLandmark]) -> [String] {
         Array(Set(landmarks.compactMap { inferZone(from: $0.label) })).sorted()
+    }
+
+    private func inferredKinds(from landmarks: [VenueLandmark]) -> [String] {
+        Array(Set(landmarks.compactMap { inferKind(from: $0.label) })).sorted()
     }
 
     private func inferZone(from label: String) -> String? {
@@ -271,6 +295,32 @@ struct MockVenueScanService: VenueScanService {
 
         let venueZones = ["clubhouse", "car park", "forest", "bench", "fence"]
         return venueZones.first(where: { normalized.contains($0) })
+    }
+
+    private func inferKind(from label: String) -> String? {
+        let normalized = normalizeLabel(label)
+
+        if normalized.contains("fence") {
+            return "fence"
+        }
+
+        if normalized.contains("clubhouse") || normalized.contains("house") || normalized.contains("roof") || normalized.contains("building") {
+            return "building"
+        }
+
+        if normalized.contains("floodlight") || normalized.contains("mast") || normalized.contains("light") || normalized.contains("post") || normalized.contains("pole") {
+            return "light post"
+        }
+
+        if normalized.contains("gate") || normalized.contains("entrance") {
+            return "gate"
+        }
+
+        if normalized.contains("bench") || normalized.contains("shelter") || normalized.contains("dugout") {
+            return "shelter"
+        }
+
+        return nil
     }
 
     private func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {

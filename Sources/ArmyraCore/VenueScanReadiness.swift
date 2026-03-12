@@ -29,6 +29,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
     public var inferredLandmarkZoneCount: Int
     public var inferableLandmarkCount: Int
     public var suggestedCaptureZones: [String]
+    public var inferredLandmarkKindCount: Int
+    public var suggestedCaptureKinds: [String]
     public var issues: [VenueScanReadinessIssue]
 
     public init(
@@ -42,6 +44,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         inferredLandmarkZoneCount: Int,
         inferableLandmarkCount: Int,
         suggestedCaptureZones: [String],
+        inferredLandmarkKindCount: Int,
+        suggestedCaptureKinds: [String],
         issues: [VenueScanReadinessIssue]
     ) {
         self.level = level
@@ -54,6 +58,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         self.inferredLandmarkZoneCount = inferredLandmarkZoneCount
         self.inferableLandmarkCount = inferableLandmarkCount
         self.suggestedCaptureZones = suggestedCaptureZones
+        self.inferredLandmarkKindCount = inferredLandmarkKindCount
+        self.suggestedCaptureKinds = suggestedCaptureKinds
         self.issues = issues
     }
 }
@@ -63,6 +69,7 @@ public enum VenueScanReadinessAnalyzer {
         let derivedHintCount = session.coveredSides >= 3 && session.capturedLandmarks.count >= 4 ? 2 : 1
         let roleCounts = roleCounts(for: session.landmarks)
         let zoneSpread = zoneSpread(for: session.landmarks)
+        let kindSpread = kindSpread(for: session.landmarks)
         return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
@@ -83,6 +90,11 @@ public enum VenueScanReadinessAnalyzer {
                 presentZones: zoneSpread.presentZones,
                 inferableLandmarkCount: zoneSpread.inferableLandmarkCount
             ),
+            inferredLandmarkKindCount: kindSpread.kindCount,
+            suggestedCaptureKinds: suggestedCaptureKinds(
+                presentKinds: kindSpread.presentKinds,
+                inferableLandmarkCount: kindSpread.inferableLandmarkCount
+            ),
             taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
     }
@@ -91,6 +103,7 @@ public enum VenueScanReadinessAnalyzer {
         let estimatedSides = max(1, min(Int(round(venueScan.scanCoverageScore * 4)), 4))
         let roleCounts = roleCounts(for: venueScan.landmarks)
         let zoneSpread = zoneSpread(for: venueScan.landmarks)
+        let kindSpread = kindSpread(for: venueScan.landmarks)
         return summarize(
             landmarkCount: venueScan.landmarkNotes.count,
             coveredSides: estimatedSides,
@@ -110,6 +123,11 @@ public enum VenueScanReadinessAnalyzer {
             suggestedCaptureZones: suggestedCaptureZones(
                 presentZones: zoneSpread.presentZones,
                 inferableLandmarkCount: zoneSpread.inferableLandmarkCount
+            ),
+            inferredLandmarkKindCount: kindSpread.kindCount,
+            suggestedCaptureKinds: suggestedCaptureKinds(
+                presentKinds: kindSpread.presentKinds,
+                inferableLandmarkCount: kindSpread.inferableLandmarkCount
             ),
             taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
@@ -132,6 +150,8 @@ public enum VenueScanReadinessAnalyzer {
         inferredLandmarkZoneCount: Int,
         inferableLandmarkCount: Int,
         suggestedCaptureZones: [String],
+        inferredLandmarkKindCount: Int,
+        suggestedCaptureKinds: [String],
         taggedRoleZoneCount: Int
     ) -> VenueScanReadinessSummary {
         var issues: [VenueScanReadinessIssue] = []
@@ -298,6 +318,16 @@ public enum VenueScanReadinessAnalyzer {
             score -= 0.08
         }
 
+        if inferableLandmarkCount >= 3 && inferredLandmarkKindCount <= 1 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "Most captured landmarks are the same kind of object. Add a different durable reference type, like a fence, building, or light post.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
+        }
+
         score = min(max(score, 0), 1)
 
         let level: VenueScanReadinessLevel
@@ -330,6 +360,8 @@ public enum VenueScanReadinessAnalyzer {
             inferredLandmarkZoneCount: inferredLandmarkZoneCount,
             inferableLandmarkCount: inferableLandmarkCount,
             suggestedCaptureZones: suggestedCaptureZones,
+            inferredLandmarkKindCount: inferredLandmarkKindCount,
+            suggestedCaptureKinds: suggestedCaptureKinds,
             issues: issues
         )
     }
@@ -378,6 +410,26 @@ public enum VenueScanReadinessAnalyzer {
         return venueZones.filter { !presentZones.contains($0) }
     }
 
+    private static func kindSpread(for landmarks: [VenueLandmark]) -> (
+        kindCount: Int,
+        inferableLandmarkCount: Int,
+        presentKinds: [String]
+    ) {
+        let inferredKinds = landmarks.compactMap { inferKind(from: $0.label) }
+        let uniqueKinds = Array(Set(inferredKinds)).sorted()
+        return (
+            kindCount: uniqueKinds.count,
+            inferableLandmarkCount: inferredKinds.count,
+            presentKinds: uniqueKinds
+        )
+    }
+
+    private static func suggestedCaptureKinds(presentKinds: [String], inferableLandmarkCount: Int) -> [String] {
+        guard inferableLandmarkCount > 0 else { return [] }
+        let durableKinds = ["fence", "building", "light post", "gate", "shelter"]
+        return durableKinds.filter { !presentKinds.contains($0) }
+    }
+
     private static func roleMatches(label: String?, role: LandmarkRole, landmarks: [VenueLandmark]) -> Bool {
         guard let label, !label.isEmpty else { return false }
         return landmarks.contains {
@@ -404,6 +456,32 @@ public enum VenueScanReadinessAnalyzer {
         ]
 
         return venueZones.first(where: { normalized.contains($0) })
+    }
+
+    private static func inferKind(from label: String) -> String? {
+        let normalized = normalizeLabel(label)
+
+        if normalized.contains("fence") {
+            return "fence"
+        }
+
+        if normalized.contains("clubhouse") || normalized.contains("house") || normalized.contains("roof") || normalized.contains("building") {
+            return "building"
+        }
+
+        if normalized.contains("floodlight") || normalized.contains("mast") || normalized.contains("light") || normalized.contains("post") || normalized.contains("pole") {
+            return "light post"
+        }
+
+        if normalized.contains("gate") || normalized.contains("entrance") {
+            return "gate"
+        }
+
+        if normalized.contains("bench") || normalized.contains("shelter") || normalized.contains("dugout") {
+            return "shelter"
+        }
+
+        return nil
     }
 
     private static func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {
