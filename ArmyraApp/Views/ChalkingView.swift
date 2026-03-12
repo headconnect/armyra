@@ -113,16 +113,25 @@ struct ChalkingView: View {
                                         .foregroundStyle(.secondary)
 
                                     HStack {
-                                        Button("Advance Segment") {
-                                            store.advanceChalkingSession()
+                                        Button("Refresh Live Status") {
+                                            store.refreshChalkingTracking()
                                         }
                                         .buttonStyle(.borderedProminent)
 
-                                        Button("Cycle Confidence") {
+                                        Button("Advance Segment") {
+                                            store.advanceChalkingSession()
+                                        }
+                                        .buttonStyle(.bordered)
+
+                                        Button("Simulate Drift") {
                                             store.cycleTrackingConfidence()
                                         }
                                         .buttonStyle(.bordered)
                                     }
+
+                                    Text("Live status uses relocalization diagnostics when available. Manual controls remain here for simulator fallback and drift rehearsal.")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
 
                                     Button("End Session", role: .destructive) {
                                         store.endChalkingSession()

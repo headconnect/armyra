@@ -304,11 +304,20 @@ final class ProjectStore: ObservableObject {
         let payload = asset.flatMap { venueTrackingAssetStore.payload(for: $0) }
         arSessionCoordinator.startChalkingSession(for: project.venueScan, assetData: payload)
         chalkingSession = venueTrackingService.startSession(project: project, layout: layout)
-        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+        let snapshot = arSessionCoordinator.chalkingSnapshot(
             project: project,
             layout: layout,
             confidence: chalkingSession?.trackingConfidence ?? .good
         )
+        chalkingTrackingSnapshot = snapshot
+        if let chalkingSession {
+            self.chalkingSession = venueTrackingService.reconcile(
+                chalkingSession,
+                project: project,
+                layout: layout,
+                trackingSnapshot: snapshot
+            )
+        }
     }
 
     func advanceChalkingSession() {
@@ -317,12 +326,18 @@ final class ProjectStore: ObservableObject {
               let chalkingSession else { return }
 
         let updatedSession = venueTrackingService.advance(chalkingSession, project: project, layout: layout)
-        self.chalkingSession = updatedSession
-        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+        let snapshot = arSessionCoordinator.chalkingSnapshot(
             project: project,
             layout: layout,
             confidence: updatedSession.trackingConfidence
         )
+        self.chalkingSession = venueTrackingService.reconcile(
+            updatedSession,
+            project: project,
+            layout: layout,
+            trackingSnapshot: snapshot
+        )
+        chalkingTrackingSnapshot = snapshot
     }
 
     func cycleTrackingConfidence() {
@@ -331,11 +346,36 @@ final class ProjectStore: ObservableObject {
               let chalkingSession else { return }
 
         let updatedSession = venueTrackingService.cycleConfidence(chalkingSession, project: project, layout: layout)
-        self.chalkingSession = updatedSession
-        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+        let snapshot = arSessionCoordinator.chalkingSnapshot(
             project: project,
             layout: layout,
             confidence: updatedSession.trackingConfidence
+        )
+        self.chalkingSession = venueTrackingService.reconcile(
+            updatedSession,
+            project: project,
+            layout: layout,
+            trackingSnapshot: snapshot
+        )
+        chalkingTrackingSnapshot = snapshot
+    }
+
+    func refreshChalkingTracking() {
+        guard let project = selectedProject,
+              let layout = selectedChalkingLayout,
+              let chalkingSession else { return }
+
+        let snapshot = arSessionCoordinator.chalkingSnapshot(
+            project: project,
+            layout: layout,
+            confidence: chalkingSession.trackingConfidence
+        )
+        chalkingTrackingSnapshot = snapshot
+        self.chalkingSession = venueTrackingService.reconcile(
+            chalkingSession,
+            project: project,
+            layout: layout,
+            trackingSnapshot: snapshot
         )
     }
 

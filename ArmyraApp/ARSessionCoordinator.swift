@@ -30,20 +30,28 @@ enum DefaultARSessionCoordinatorFactory {
     }
 }
 
-struct MockARSessionCoordinator: ARSessionCoordinator {
-    private var sessionMode: ARSessionMode {
-        .idle
+final class MockARSessionCoordinator: ARSessionCoordinator {
+    private var sessionMode: ARSessionMode = .idle
+    private var lastPayloadSizeBytes = 0
+
+    func startPlanningSession(for venueScan: VenueScan) {
+        sessionMode = .planning
     }
 
-    func startPlanningSession(for venueScan: VenueScan) {}
-
-    func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {}
+    func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {
+        sessionMode = .chalking
+        lastPayloadSizeBytes = assetData?.count ?? 0
+    }
 
     func capturePlanningAsset(for venueScan: VenueScan) async -> (VenueTrackingAssetRecord, Data?) {
-        (recordPlanningAsset(for: venueScan), nil)
+        let payload = "mock-worldmap-\(venueScan.id.uuidString.lowercased())".data(using: .utf8)
+        lastPayloadSizeBytes = payload?.count ?? 0
+        return (recordPlanningAsset(for: venueScan), payload)
     }
 
-    func stopSession() {}
+    func stopSession() {
+        sessionMode = .idle
+    }
 
     func currentDiagnostics(
         for venueScan: VenueScan,
@@ -57,7 +65,7 @@ struct MockARSessionCoordinator: ARSessionCoordinator {
             relocalizationState: snapshot.relocalizationState,
             readinessScore: snapshot.readinessScore,
             hasLocalAsset: asset != nil,
-            payloadSizeBytes: payload?.count ?? 0,
+            payloadSizeBytes: payload?.count ?? lastPayloadSizeBytes,
             activeHint: snapshot.activeHint,
             lastErrorDescription: nil
         )

@@ -4,6 +4,12 @@ protocol VenueTrackingService {
     func startSession(project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
     func advance(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
     func cycleConfidence(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
+    func reconcile(
+        _ session: ChalkingSessionState,
+        project: ProjectPackage,
+        layout: FieldLayout,
+        trackingSnapshot: VenueTrackingSnapshot
+    ) -> ChalkingSessionState
 }
 
 struct MockVenueTrackingService: VenueTrackingService {
@@ -63,6 +69,46 @@ struct MockVenueTrackingService: VenueTrackingService {
                 project: project,
                 remainingSegments: max(session.totalSegments - session.completedSegments, 0)
             )
+        )
+    }
+
+    func reconcile(
+        _ session: ChalkingSessionState,
+        project: ProjectPackage,
+        layout: FieldLayout,
+        trackingSnapshot: VenueTrackingSnapshot
+    ) -> ChalkingSessionState {
+        let confidence: TrackingConfidence
+        switch trackingSnapshot.relocalizationState {
+        case .localized:
+            confidence = .good
+        case .limited:
+            confidence = .warning
+        case .scanning, .unavailable:
+            confidence = .recover
+        }
+
+        let autoCompletedSegments: Int
+        if confidence == .good && session.completedSegments < session.totalSegments {
+            autoCompletedSegments = min(session.completedSegments + 1, session.totalSegments)
+        } else {
+            autoCompletedSegments = session.completedSegments
+        }
+
+        let remainingSegments = max(session.totalSegments - autoCompletedSegments, 0)
+        let guidanceBase = guidanceHint(
+            for: confidence,
+            project: project,
+            remainingSegments: remainingSegments
+        )
+
+        return ChalkingSessionState(
+            layoutID: layout.id,
+            layoutName: layout.name,
+            completedSegments: autoCompletedSegments,
+            totalSegments: session.totalSegments,
+            trackingConfidence: confidence,
+            recommendedHint: "\(trackingSnapshot.activeHint) \(guidanceBase)"
         )
     }
 
