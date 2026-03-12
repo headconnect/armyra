@@ -26,7 +26,7 @@ public struct VenueTrackingSnapshot: Equatable, Sendable {
     }
 }
 
-public struct VenueTrackingAssetRecord: Equatable, Identifiable, Sendable {
+public struct VenueTrackingAssetRecord: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var venueScanID: UUID
     public var createdAt: Date

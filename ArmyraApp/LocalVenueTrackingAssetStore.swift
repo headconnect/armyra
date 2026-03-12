@@ -77,13 +77,13 @@ final class FileBackedVenueTrackingAssetStore: VenueTrackingAssetStore {
         guard fileManager.fileExists(atPath: indexURL.path) else { return }
         let data = try Data(contentsOf: indexURL)
         let records = try JSONDecoder().decode([VenueTrackingAssetRecord].self, from: data)
-        assetsByVenue = Dictionary(grouping: records, by: \.venueScanID)
+        assetsByVenue = Dictionary(grouping: records, by: { $0.venueScanID })
     }
 
     private func persistIndex() throws {
         let records = assetsByVenue.values.flatMap { $0 }.sorted { $0.createdAt < $1.createdAt }
         let data = try JSONEncoder().encode(records)
-        try data.write(to: indexURL, options: .atomic)
+        try data.write(to: indexURL, options: Data.WritingOptions.atomic)
     }
 
     private static func applicationSupportDirectory(fileManager: FileManager) throws -> URL {
