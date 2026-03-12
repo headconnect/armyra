@@ -8,6 +8,9 @@ on:
       - 'codex/**'
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test-and-build:
     runs-on: macos-15
@@ -25,7 +28,26 @@ jobs:
         run: brew install xcodegen
 
       - name: Run Swift package tests
-        run: swift test
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test --verbose 2>&1 | tee swift-test.log
+          test_status=${PIPESTATUS[0]}
+          {
+            echo '## swift test tail'
+            echo '```text'
+            tail -n 200 swift-test.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$test_status"
+
+      - name: Upload Swift test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-test-log
+          path: swift-test.log
+          if-no-files-found: warn
 
       - name: Generate Xcode project
         run: xcodegen generate
@@ -41,6 +63,7 @@ jobs:
             build
 
       - name: Upload simulator app
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Armyra-simulator-app
