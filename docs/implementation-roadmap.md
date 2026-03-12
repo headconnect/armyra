@@ -28,6 +28,7 @@
 - The venue scan workflow now supports explicit landmark roles, so the club can tag captured objects as start-side candidates, recovery-side candidates, or general references.
 - Venue-scan readiness now scores those landmark roles directly and shows a handoff checklist, so a scan is not considered parent-safe just because edge labels happen to exist.
 - Venue-scan readiness now also checks that the chosen start and recovery edges are backed by correctly tagged landmarks, which reduces the risk of handoff drift from manual edge overrides.
+- Venue-scan readiness now also checks whether captured landmarks are actually spread around the venue, which helps catch scans that look complete on paper but are still clustered on one side in practice.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
@@ -43,6 +44,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Use explicit landmark roles more directly in readiness scoring so handoff confidence depends less on label heuristics over time.
 - Add role-aware capture guidance that nudges the rep toward a more balanced landmark spread, not just one start object and one fallback object.
+- Keep improving the venue-side heuristics so spread warnings become less dependent on label wording once real scan metadata exists.
 - Add a more venue-level notion of setup corridors or trolley approach lanes, not just pairwise pitch gaps.
 - Keep turning chalking into a recovery-first workflow by surfacing recovery targets, start-edge cues, and trusted/not-trusted guidance states directly in the main UI.
 - Feed more of the chalking progression from live AR status so the simulator controls become an escape hatch rather than the main interaction.

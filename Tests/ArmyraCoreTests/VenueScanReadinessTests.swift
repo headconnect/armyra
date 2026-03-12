@@ -22,20 +22,20 @@ final class VenueScanReadinessTests: XCTestCase {
     func testBroadVenueScanCanLockForHandoff() {
         let venueScan = VenueScan(
             venueName: "Community Grounds",
-            landmarkNotes: ["West fence", "Clubhouse", "Floodlight mast", "House roof", "Car park gate"],
+            landmarkNotes: ["West fence", "South clubhouse", "North floodlight mast", "East house roof", "South car park gate"],
             landmarks: [
                 VenueLandmark(label: "West fence", role: .startCandidate),
-                VenueLandmark(label: "Clubhouse", role: .recoveryCandidate),
-                VenueLandmark(label: "Floodlight mast", role: .general),
-                VenueLandmark(label: "House roof", role: .general),
-                VenueLandmark(label: "Car park gate", role: .general),
+                VenueLandmark(label: "South clubhouse", role: .recoveryCandidate),
+                VenueLandmark(label: "North floodlight mast", role: .general),
+                VenueLandmark(label: "East house roof", role: .general),
+                VenueLandmark(label: "South car park gate", role: .general),
             ],
             recommendedRelocalizationHints: [
                 "Start from the west fence side.",
                 "If tracking softens, return toward the clubhouse side."
             ],
             preferredStartEdge: "West fence side",
-            preferredRecoveryEdge: "Clubhouse side",
+            preferredRecoveryEdge: "South clubhouse side",
             scanCoverageScore: 0.9
         )
 
@@ -46,6 +46,7 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertTrue(summary.issues.isEmpty)
         XCTAssertEqual(summary.startCandidateCount, 1)
         XCTAssertEqual(summary.recoveryCandidateCount, 1)
+        XCTAssertEqual(summary.inferredLandmarkZoneCount, 4)
     }
 
     func testSameStartAndRecoveryEdgeProducesCaution() {
@@ -141,5 +142,31 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.level, .caution)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("chosen start edge") }))
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("chosen recovery edge") }))
+    }
+
+    func testClusteredLandmarksWarnAboutPoorSpread() {
+        let session = VenueScanSessionState(
+            venueName: "West Bank",
+            capturedLandmarks: ["West fence", "West bench shelter", "West floodlight mast", "West car park gate"],
+            landmarks: [
+                VenueLandmark(label: "West fence", role: .startCandidate),
+                VenueLandmark(label: "West bench shelter", role: .recoveryCandidate),
+                VenueLandmark(label: "West floodlight mast", role: .general),
+                VenueLandmark(label: "West car park gate", role: .general),
+            ],
+            coveredSides: 3,
+            preferredStartEdge: "West fence",
+            preferredRecoveryEdge: "West bench shelter",
+            readinessScore: 0.88,
+            phase: .ready,
+            recommendedHint: "Use the west side."
+        )
+
+        let summary = VenueScanReadinessAnalyzer.summarize(session: session)
+
+        XCTAssertEqual(summary.level, .caution)
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("clustered around one part") }))
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("same part of the venue") }))
+        XCTAssertEqual(summary.inferredLandmarkZoneCount, 1)
     }
 }

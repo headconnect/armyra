@@ -247,6 +247,10 @@ struct PlanningView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
+                    Text("Aim to capture named references on more than one edge, not just repeated objects from the same side.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     ForEach(session.capturedLandmarks, id: \.self) { landmark in
                         VStack(alignment: .leading, spacing: 6) {
                             Label(landmark, systemImage: "mappin.and.ellipse")

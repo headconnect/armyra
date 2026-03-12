@@ -608,6 +608,7 @@ final class ProjectStore: ObservableObject {
                 count: summary.generalLandmarkCount,
                 recommendedMinimum: 1
             ),
+            spreadChecklistLine(summary: summary),
         ]
     }
 
@@ -660,12 +661,12 @@ final class ProjectStore: ObservableObject {
 
     func availableMockLandmarks() -> [String] {
         [
-            "Fence line",
-            "Clubhouse",
-            "Floodlight mast",
-            "House roof",
-            "Car park entrance",
-            "Bench shelter"
+            "West fence line",
+            "South clubhouse roof",
+            "North floodlight mast",
+            "East house roof",
+            "South car park entrance",
+            "East touchline bench shelter"
         ]
     }
 
@@ -765,6 +766,16 @@ final class ProjectStore: ObservableObject {
         let status = count >= recommendedMinimum ? "ok" : "needs review"
         let noun = count == 1 ? "item" : "items"
         return "\(title): \(count) \(noun) (\(status))"
+    }
+
+    private func spreadChecklistLine(summary: VenueScanReadinessSummary) -> String {
+        guard summary.inferableLandmarkCount > 0 else {
+            return "Landmark spread: not enough directional labels yet"
+        }
+
+        let status = summary.inferredLandmarkZoneCount >= 2 ? "ok" : "needs review"
+        let noun = summary.inferredLandmarkZoneCount == 1 ? "zone" : "zones"
+        return "Landmark spread: \(summary.inferredLandmarkZoneCount) \(noun) named (\(status))"
     }
 
     static var preview: ProjectStore {

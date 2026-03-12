@@ -19,6 +19,7 @@
 - Venue-scan readiness analysis for club-side capture robustness and handoff gating
 - Venue-scan metadata for named preferred start and recovery edges
 - Landmark-role metadata and role-aware readiness scoring for explicit start-side, recovery-side, and general-reference capture
+- Lightweight landmark-spread analysis so the planner can tell when all useful references are still clustered on one side of the ground
 
 ### App shell
 - `Projects` tab:
@@ -43,6 +44,7 @@
   - Tag captured landmarks as start-side candidates, recovery-side candidates, or general references
   - See a handoff checklist showing whether the scan includes explicit start-side, recovery-side, and general-reference landmarks
   - Get warned if the chosen start/recovery edges are not backed by the corresponding tagged landmarks
+  - See when captured landmarks are too clustered around one part of the venue to make a robust handoff
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

@@ -26,6 +26,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
     public var startCandidateCount: Int
     public var recoveryCandidateCount: Int
     public var generalLandmarkCount: Int
+    public var inferredLandmarkZoneCount: Int
+    public var inferableLandmarkCount: Int
     public var issues: [VenueScanReadinessIssue]
 
     public init(
@@ -36,6 +38,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         startCandidateCount: Int,
         recoveryCandidateCount: Int,
         generalLandmarkCount: Int,
+        inferredLandmarkZoneCount: Int,
+        inferableLandmarkCount: Int,
         issues: [VenueScanReadinessIssue]
     ) {
         self.level = level
@@ -45,6 +49,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         self.startCandidateCount = startCandidateCount
         self.recoveryCandidateCount = recoveryCandidateCount
         self.generalLandmarkCount = generalLandmarkCount
+        self.inferredLandmarkZoneCount = inferredLandmarkZoneCount
+        self.inferableLandmarkCount = inferableLandmarkCount
         self.issues = issues
     }
 }
@@ -53,6 +59,7 @@ public enum VenueScanReadinessAnalyzer {
     public static func summarize(session: VenueScanSessionState) -> VenueScanReadinessSummary {
         let derivedHintCount = session.coveredSides >= 3 && session.capturedLandmarks.count >= 4 ? 2 : 1
         let roleCounts = roleCounts(for: session.landmarks)
+        let zoneSpread = zoneSpread(for: session.landmarks)
         return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
@@ -66,13 +73,17 @@ public enum VenueScanReadinessAnalyzer {
             relocalizationHintCount: derivedHintCount,
             startCandidateCount: roleCounts.startCandidateCount,
             recoveryCandidateCount: roleCounts.recoveryCandidateCount,
-            generalLandmarkCount: roleCounts.generalLandmarkCount
+            generalLandmarkCount: roleCounts.generalLandmarkCount,
+            inferredLandmarkZoneCount: zoneSpread.zoneCount,
+            inferableLandmarkCount: zoneSpread.inferableLandmarkCount,
+            taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
     }
 
     public static func summarize(venueScan: VenueScan) -> VenueScanReadinessSummary {
         let estimatedSides = max(1, min(Int(round(venueScan.scanCoverageScore * 4)), 4))
         let roleCounts = roleCounts(for: venueScan.landmarks)
+        let zoneSpread = zoneSpread(for: venueScan.landmarks)
         return summarize(
             landmarkCount: venueScan.landmarkNotes.count,
             coveredSides: estimatedSides,
@@ -86,7 +97,10 @@ public enum VenueScanReadinessAnalyzer {
             relocalizationHintCount: venueScan.recommendedRelocalizationHints.count,
             startCandidateCount: roleCounts.startCandidateCount,
             recoveryCandidateCount: roleCounts.recoveryCandidateCount,
-            generalLandmarkCount: roleCounts.generalLandmarkCount
+            generalLandmarkCount: roleCounts.generalLandmarkCount,
+            inferredLandmarkZoneCount: zoneSpread.zoneCount,
+            inferableLandmarkCount: zoneSpread.inferableLandmarkCount,
+            taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
     }
 
@@ -103,7 +117,10 @@ public enum VenueScanReadinessAnalyzer {
         relocalizationHintCount: Int,
         startCandidateCount: Int,
         recoveryCandidateCount: Int,
-        generalLandmarkCount: Int
+        generalLandmarkCount: Int,
+        inferredLandmarkZoneCount: Int,
+        inferableLandmarkCount: Int,
+        taggedRoleZoneCount: Int
     ) -> VenueScanReadinessSummary {
         var issues: [VenueScanReadinessIssue] = []
         var score = min(max(readinessScore, 0), 1)
@@ -249,6 +266,26 @@ public enum VenueScanReadinessAnalyzer {
             score -= 0.05
         }
 
+        if inferableLandmarkCount >= 3 && inferredLandmarkZoneCount <= 1 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "Captured landmarks are clustered around one part of the venue. Add references on a different edge so relocalization is not one-sided in practice.",
+                    level: .caution
+                )
+            )
+            score -= 0.12
+        }
+
+        if taggedRoleZoneCount == 1 && startCandidateCount > 0 && recoveryCandidateCount > 0 {
+            issues.append(
+                VenueScanReadinessIssue(
+                    message: "The tagged start and recovery landmarks still point to the same part of the venue. Spread them across different edges before handoff.",
+                    level: .caution
+                )
+            )
+            score -= 0.08
+        }
+
         score = min(max(score, 0), 1)
 
         let level: VenueScanReadinessLevel
@@ -278,6 +315,8 @@ public enum VenueScanReadinessAnalyzer {
             startCandidateCount: startCandidateCount,
             recoveryCandidateCount: recoveryCandidateCount,
             generalLandmarkCount: generalLandmarkCount,
+            inferredLandmarkZoneCount: inferredLandmarkZoneCount,
+            inferableLandmarkCount: inferableLandmarkCount,
             issues: issues
         )
     }
@@ -293,11 +332,49 @@ public enum VenueScanReadinessAnalyzer {
         return (startCandidateCount, recoveryCandidateCount, generalLandmarkCount)
     }
 
+    private static func zoneSpread(for landmarks: [VenueLandmark]) -> (
+        zoneCount: Int,
+        inferableLandmarkCount: Int,
+        taggedRoleZoneCount: Int
+    ) {
+        let inferredZones = landmarks.compactMap { inferZone(from: $0.label) }
+        let taggedRoleZones = landmarks
+            .filter { $0.role != .general }
+            .compactMap { inferZone(from: $0.label) }
+
+        return (
+            zoneCount: Set(inferredZones).count,
+            inferableLandmarkCount: inferredZones.count,
+            taggedRoleZoneCount: Set(taggedRoleZones).count
+        )
+    }
+
     private static func roleMatches(label: String?, role: LandmarkRole, landmarks: [VenueLandmark]) -> Bool {
         guard let label, !label.isEmpty else { return false }
         return landmarks.contains {
             $0.role == role && labelsLooselyMatch($0.label, label)
         }
+    }
+
+    private static func inferZone(from label: String) -> String? {
+        let normalized = normalizeLabel(label)
+
+        let directionalZones = ["west", "east", "north", "south"]
+        if let direction = directionalZones.first(where: { normalized.contains($0) }) {
+            return direction
+        }
+
+        let venueZones = [
+            "clubhouse",
+            "car park",
+            "forest",
+            "fence",
+            "bench",
+            "touchline",
+            "goal",
+        ]
+
+        return venueZones.first(where: { normalized.contains($0) })
     }
 
     private static func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {
@@ -316,7 +393,6 @@ public enum VenueScanReadinessAnalyzer {
             .replacingOccurrences(of: "touchline", with: "")
             .replacingOccurrences(of: "goal line", with: "")
             .replacingOccurrences(of: "goal-line", with: "")
-            .replacingOccurrences(of: "goal", with: "")
             .replacingOccurrences(of: "line", with: "")
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
