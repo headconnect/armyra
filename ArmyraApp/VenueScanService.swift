@@ -1,3 +1,4 @@
+import Foundation
 import ArmyraCore
 
 protocol VenueScanService {
