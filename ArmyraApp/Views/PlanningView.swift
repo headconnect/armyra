@@ -11,6 +11,7 @@ struct PlanningView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             summaryCard(for: project)
+                            templatePickerCard
 
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Saved Layouts")
@@ -19,10 +20,14 @@ struct PlanningView: View {
                                 ForEach(project.layouts) { layout in
                                     let geometry = FieldGeometryBuilder.build(for: layout)
 
-                                    VStack(alignment: .leading, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 10) {
                                         HStack {
-                                            Text(layout.name)
-                                                .font(.title3.weight(.semibold))
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(layout.name)
+                                                    .font(.title3.weight(.semibold))
+                                                Text("\(Int(layout.dimensions.lengthMeters))m x \(Int(layout.dimensions.widthMeters))m")
+                                                    .foregroundStyle(.secondary)
+                                            }
                                             Spacer()
                                             Text(lockModeText(layout.lockMode))
                                                 .font(.caption)
@@ -31,10 +36,11 @@ struct PlanningView: View {
                                                 .background(.blue.opacity(0.12), in: Capsule())
                                         }
 
-                                        Text("\(Int(layout.dimensions.lengthMeters))m x \(Int(layout.dimensions.widthMeters))m")
+                                        Text(store.markingsDescription(for: layout))
+                                            .font(.subheadline)
                                             .foregroundStyle(.secondary)
 
-                                        Text("Boundary segments: \(geometry.boundary.count), interior segments: \(geometry.interiorLines.count), circular marks: \(geometry.circles.count)")
+                                        Text("Boundary: \(geometry.boundary.count), interior: \(geometry.interiorLines.count), circles: \(geometry.circles.count)")
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
                                     }
@@ -52,6 +58,42 @@ struct PlanningView: View {
             }
             .navigationTitle("Planning")
         }
+    }
+
+    private var templatePickerCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Create Layout")
+                .font(.headline)
+
+            if let project = store.selectedProject {
+                Picker("Template", selection: Binding(get: {
+                    store.selectedTemplateID ?? project.templates.first?.id ?? UUID()
+                }, set: { newValue in
+                    store.selectedTemplateID = newValue
+                })) {
+                    ForEach(project.templates) { template in
+                        Text(template.name).tag(template.id)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if let template = store.selectedTemplate {
+                    Text("Default markings: \(template.defaultMarkings.map(\.rawValue).sorted().joined(separator: ", "))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Button {
+                    store.addLayoutFromSelectedTemplate()
+                } label: {
+                    Label("Add Layout From Template", systemImage: "plus.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func summaryCard(for project: ProjectPackage) -> some View {

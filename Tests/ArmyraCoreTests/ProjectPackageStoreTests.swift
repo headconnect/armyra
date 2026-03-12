@@ -31,4 +31,20 @@ final class ProjectPackageStoreTests: XCTestCase {
         XCTAssertEqual(decoded.layouts, package.layouts)
         XCTAssertEqual(decoded.venueScan.venueName, package.venueScan.venueName)
     }
+
+    func testSuggestedFileNameSanitizesProjectName() {
+        let package = ProjectPackage(
+            projectName: "North Park 5A / 5B",
+            venueScan: VenueScan(
+                venueName: "North Field",
+                landmarkNotes: [],
+                recommendedRelocalizationHints: [],
+                scanCoverageScore: 1
+            ),
+            templates: [],
+            layouts: []
+        )
+
+        XCTAssertEqual(ProjectPackageStore.suggestedFileName(for: package), "north-park-5a--5b.armyrafield")
+    }
 }

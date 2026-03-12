@@ -1,5 +1,10 @@
 # iOS AR Football Pitch Marking App Plan
 
+## Current implementation status
+- Core geometry, template, validation, and package persistence layers are implemented.
+- CI now runs Swift package tests, generates the Xcode project, builds the iOS simulator app, and uploads the app artifact.
+- The app shell now supports project selection, template-based layout creation, and package export preview in addition to the initial planning and chalking overview screens.
+
 ## Summary
 Build a native iPhone app in Swift using `ARKit` and `RealityKit` with two core modes:
 

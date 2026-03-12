@@ -20,5 +20,23 @@ struct RootView: View {
                     Label("Chalking", systemImage: "figure.walk")
                 }
         }
+        .sheet(item: $store.exportPreview) { preview in
+            NavigationStack {
+                ScrollView {
+                    Text(preview.payload)
+                        .font(.system(.footnote, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                }
+                .navigationTitle(preview.fileName)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            store.dismissExportPreview()
+                        }
+                    }
+                }
+            }
+        }
     }
 }

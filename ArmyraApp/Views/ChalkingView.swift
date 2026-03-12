@@ -14,9 +14,9 @@ struct ChalkingView: View {
                                 Text(layout.name)
                                     .font(.headline)
                                 Spacer()
-                                Text("Ready")
+                                Text(statusText(for: layout))
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(statusColor(for: layout))
                             }
 
                             Text(chalkingInstruction(for: layout, in: project))
@@ -36,5 +36,23 @@ struct ChalkingView: View {
     private func chalkingInstruction(for layout: FieldLayout, in project: ProjectPackage) -> String {
         let firstHint = project.venueScan.recommendedRelocalizationHints.first ?? "Start from a known landmark edge."
         return "Begin with the perimeter for \(layout.name). \(firstHint)"
+    }
+
+    private func statusText(for layout: FieldLayout) -> String {
+        switch layout.lockMode {
+        case .center:
+            return "Relocalize"
+        case .corner:
+            return "Ready"
+        }
+    }
+
+    private func statusColor(for layout: FieldLayout) -> Color {
+        switch layout.lockMode {
+        case .center:
+            return .orange
+        case .corner:
+            return .green
+        }
     }
 }
