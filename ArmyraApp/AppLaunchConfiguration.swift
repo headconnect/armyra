@@ -8,6 +8,7 @@ enum ScreenshotScene: String {
     case chalkingActive
 }
 
+@MainActor
 struct AppLaunchConfiguration {
     let screenshotScene: ScreenshotScene?
 
