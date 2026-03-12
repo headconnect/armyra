@@ -72,4 +72,10 @@ final class FieldLayoutAnalysisTests: XCTestCase {
         XCTAssertEqual(summary?.preferredAxis, .vertical)
         XCTAssertEqual(summary?.widestVerticalBandMeters ?? 0, 10, accuracy: 0.000_001)
     }
+
+    func testInferEdgeOrientationFromLabel() {
+        XCTAssertEqual(FieldLayoutAnalysis.inferEdgeOrientation(from: "West fence side"), .verticalBoundary)
+        XCTAssertEqual(FieldLayoutAnalysis.inferEdgeOrientation(from: "Clubhouse goal end"), .horizontalBoundary)
+        XCTAssertNil(FieldLayoutAnalysis.inferEdgeOrientation(from: "Floodlight mast"))
+    }
 }

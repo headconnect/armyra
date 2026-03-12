@@ -483,9 +483,17 @@ struct PlanningView: View {
             .frame(height: 240)
 
             if let corridorSummary = store.setupCorridorSummaryText() {
-                Label(corridorSummary, systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(corridorSummary, systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    if let corridorGuidance = store.setupCorridorEdgeGuidanceText() {
+                        Text(corridorGuidance)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             let overlaps = store.overlappingLayoutNames()

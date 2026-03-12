@@ -38,6 +38,7 @@
   - Review and change the suggested start/recovery edges before locking the scan
   - See practical chalking-lane warnings when adjacent pitches leave too little setup room
   - See a venue-level best-setup-corridor summary in the top-down planner
+  - See guidance when the chosen start/recovery edges do not line up with the best venue approach direction
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

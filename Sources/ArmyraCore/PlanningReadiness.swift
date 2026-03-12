@@ -121,6 +121,23 @@ public enum PlanningReadinessAnalyzer {
                 )
                 score -= 0.08
             }
+
+            let expectedBoundaryOrientation: VenueEdgeOrientation =
+                corridorSummary.preferredAxis == .vertical ? .horizontalBoundary : .verticalBoundary
+
+            let chosenEdges = [project.venueScan.preferredStartEdge, project.venueScan.preferredRecoveryEdge]
+                .compactMap { $0 }
+                .compactMap(FieldLayoutAnalysis.inferEdgeOrientation(from:))
+
+            if chosenEdges.isEmpty == false && chosenEdges.allSatisfy({ $0 != expectedBoundaryOrientation }) {
+                issues.append(
+                    PlanningReadinessIssue(
+                        message: "The chosen start and recovery edges do not seem to line up with the strongest venue setup corridor.",
+                        level: .caution
+                    )
+                )
+                score -= 0.08
+            }
         }
 
         if project.layouts.isEmpty {

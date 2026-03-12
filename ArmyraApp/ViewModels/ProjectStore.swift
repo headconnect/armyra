@@ -489,8 +489,18 @@ final class ProjectStore: ObservableObject {
             return nil
         }
 
-        let preferredAxis = summary.preferredAxis == .vertical ? "vertical" : "horizontal"
-        return "Best setup corridor: \(preferredAxis) \(Int(max(summary.widestVerticalBandMeters, summary.widestHorizontalBandMeters).rounded()))m"
+        let preferredAxis = summary.preferredAxis == .vertical ? "north-south" : "east-west"
+        return "Best setup corridor: \(preferredAxis), about \(Int(max(summary.widestVerticalBandMeters, summary.widestHorizontalBandMeters).rounded()))m clear"
+    }
+
+    func setupCorridorEdgeGuidanceText() -> String? {
+        guard let project = selectedProject,
+              let summary = FieldLayoutAnalysis.setupCorridorSummary(in: project.layouts) else {
+            return nil
+        }
+
+        let expectedEdge = summary.preferredAxis == .vertical ? "goal-line style edges" : "touchline-style edges"
+        return "Preferred handoff edges should favor \(expectedEdge) so the trolley can enter along the clearest route."
     }
 
     func planningReadinessSummary() -> PlanningReadinessSummary? {

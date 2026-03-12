@@ -88,6 +88,11 @@ public enum SetupCorridorAxis: String, Codable, Equatable, Sendable {
     case vertical
 }
 
+public enum VenueEdgeOrientation: String, Codable, Equatable, Sendable {
+    case horizontalBoundary
+    case verticalBoundary
+}
+
 public struct VenueSetupCorridorSummary: Equatable, Sendable {
     public var widestHorizontalBandMeters: Double
     public var widestVerticalBandMeters: Double
@@ -245,6 +250,26 @@ public enum FieldLayoutAnalysis {
             widestVerticalBandMeters: widestVerticalBand,
             preferredAxis: preferredAxis
         )
+    }
+
+    public static func inferEdgeOrientation(from label: String) -> VenueEdgeOrientation? {
+        let normalized = label.lowercased()
+
+        let horizontalBoundaryKeywords = [
+            "north", "south", "goal", "end line", "endline", "clubhouse", "car park", "carpark"
+        ]
+        if horizontalBoundaryKeywords.contains(where: normalized.contains) {
+            return .horizontalBoundary
+        }
+
+        let verticalBoundaryKeywords = [
+            "east", "west", "touchline", "sideline", "side", "fence", "bench"
+        ]
+        if verticalBoundaryKeywords.contains(where: normalized.contains) {
+            return .verticalBoundary
+        }
+
+        return nil
     }
 
     private static func gapBetween(_ first: FieldBoundingBox, _ second: FieldBoundingBox) -> Double {
