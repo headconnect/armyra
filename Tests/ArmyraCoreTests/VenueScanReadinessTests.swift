@@ -148,16 +148,16 @@ final class VenueScanReadinessTests: XCTestCase {
     func testClusteredLandmarksWarnAboutPoorSpread() {
         let session = VenueScanSessionState(
             venueName: "West Bank",
-            capturedLandmarks: ["West fence", "West bench shelter", "West floodlight mast", "West car park gate"],
+            capturedLandmarks: ["West fence", "West fence corner", "West fence gate", "West fence post"],
             landmarks: [
                 VenueLandmark(label: "West fence", role: .startCandidate),
-                VenueLandmark(label: "West bench shelter", role: .recoveryCandidate),
-                VenueLandmark(label: "West floodlight mast", role: .general),
-                VenueLandmark(label: "West car park gate", role: .general),
+                VenueLandmark(label: "West fence corner", role: .recoveryCandidate),
+                VenueLandmark(label: "West fence gate", role: .general),
+                VenueLandmark(label: "West fence post", role: .general),
             ],
             coveredSides: 3,
             preferredStartEdge: "West fence",
-            preferredRecoveryEdge: "West bench shelter",
+            preferredRecoveryEdge: "West fence corner",
             readinessScore: 0.88,
             phase: .ready,
             recommendedHint: "Use the west side."
