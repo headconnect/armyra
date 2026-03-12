@@ -56,6 +56,20 @@ struct ChalkingView: View {
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
 
+                                    if let snapshot = store.chalkingTrackingSnapshot {
+                                        Label(store.chalkingRelocalizationLabel(), systemImage: "scope")
+                                            .font(.subheadline.weight(.semibold))
+                                        Text(snapshot.activeHint)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    } else {
+                                        Label("No live relocalization yet", systemImage: "scope")
+                                            .font(.subheadline.weight(.semibold))
+                                        Text("Start the chalking session to simulate venue relocalization against the saved scan asset.")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+
                                     ForEach(preflight.checklist, id: \.self) { item in
                                         Label(item, systemImage: "checkmark.circle")
                                             .font(.subheadline)

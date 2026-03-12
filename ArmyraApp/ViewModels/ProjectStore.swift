@@ -13,9 +13,13 @@ final class ProjectStore: ObservableObject {
     @Published var importErrorMessage: String?
     @Published var chalkingSession: ChalkingSessionState?
     @Published var venueScanSession: VenueScanSessionState?
+    @Published var planningTrackingSnapshot: VenueTrackingSnapshot?
+    @Published var chalkingTrackingSnapshot: VenueTrackingSnapshot?
 
     private let venueTrackingService: VenueTrackingService
     private let venueScanService: VenueScanService
+    private let arSessionCoordinator: ARSessionCoordinator
+    private let venueTrackingAssetStore: VenueTrackingAssetStore
 
     struct ExportPreview: Identifiable {
         let id = UUID()
@@ -26,15 +30,22 @@ final class ProjectStore: ObservableObject {
     init(
         projects: [ProjectPackage],
         venueTrackingService: VenueTrackingService = MockVenueTrackingService(),
-        venueScanService: VenueScanService = MockVenueScanService()
+        venueScanService: VenueScanService = MockVenueScanService(),
+        arSessionCoordinator: ARSessionCoordinator = MockARSessionCoordinator(),
+        venueTrackingAssetStore: VenueTrackingAssetStore = InMemoryVenueTrackingAssetStore()
     ) {
         self.projects = projects
         self.venueTrackingService = venueTrackingService
         self.venueScanService = venueScanService
+        self.arSessionCoordinator = arSessionCoordinator
+        self.venueTrackingAssetStore = venueTrackingAssetStore
         self.selectedProjectID = projects.first?.id
         self.selectedTemplateID = projects.first?.templates.first?.id
         self.selectedLayoutID = projects.first?.layouts.first?.id
         self.selectedChalkingLayoutID = projects.first?.layouts.first?.id
+        if let venueScan = projects.first?.venueScan {
+            self.planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: venueScan)
+        }
     }
 
     var selectedProject: ProjectPackage? {
@@ -63,6 +74,8 @@ final class ProjectStore: ObservableObject {
         selectedChalkingLayoutID = selectedProject?.layouts.first?.id
         chalkingSession = nil
         venueScanSession = nil
+        chalkingTrackingSnapshot = nil
+        planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
     }
 
     func selectLayout(_ layoutID: UUID) {
@@ -230,31 +243,44 @@ final class ProjectStore: ObservableObject {
     func startVenueScanSession() {
         guard let project = selectedProject else { return }
         venueScanSession = venueScanService.startSession(for: project.venueScan)
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: project.venueScan)
     }
 
     func captureVenueLandmark(_ landmark: String) {
-        guard let venueScanSession else { return }
-        self.venueScanSession = venueScanService.captureLandmark(landmark, session: venueScanSession)
+        guard let venueScanSession, let project = selectedProject else { return }
+        let updatedSession = venueScanService.captureLandmark(landmark, session: venueScanSession)
+        self.venueScanSession = updatedSession
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+            for: venueScanDraft(session: updatedSession, original: project.venueScan)
+        )
     }
 
     func advanceVenueCoverage() {
-        guard let venueScanSession else { return }
-        self.venueScanSession = venueScanService.advanceCoverage(session: venueScanSession)
+        guard let venueScanSession, let project = selectedProject else { return }
+        let updatedSession = venueScanService.advanceCoverage(session: venueScanSession)
+        self.venueScanSession = updatedSession
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+            for: venueScanDraft(session: updatedSession, original: project.venueScan)
+        )
     }
 
     func finalizeVenueScanSession() {
         guard let projectIndex = selectedProjectIndex,
               let venueScanSession else { return }
 
-        projects[projectIndex].venueScan = venueScanService.finalize(
+        let finalizedScan = venueScanService.finalize(
             session: venueScanSession,
             original: projects[projectIndex].venueScan
         )
+        projects[projectIndex].venueScan = finalizedScan
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: finalizedScan)
+        venueTrackingAssetStore.save(arSessionCoordinator.recordPlanningAsset(for: finalizedScan))
         self.venueScanSession = nil
     }
 
     func discardVenueScanSession() {
         venueScanSession = nil
+        planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
     }
 
     func selectChalkingLayout(_ layoutID: UUID) {
@@ -264,6 +290,11 @@ final class ProjectStore: ObservableObject {
     func startChalkingSession() {
         guard let project = selectedProject, let layout = selectedChalkingLayout else { return }
         chalkingSession = venueTrackingService.startSession(project: project, layout: layout)
+        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+            project: project,
+            layout: layout,
+            confidence: chalkingSession?.trackingConfidence ?? .good
+        )
     }
 
     func advanceChalkingSession() {
@@ -271,7 +302,13 @@ final class ProjectStore: ObservableObject {
               let layout = selectedChalkingLayout,
               let chalkingSession else { return }
 
-        self.chalkingSession = venueTrackingService.advance(chalkingSession, project: project, layout: layout)
+        let updatedSession = venueTrackingService.advance(chalkingSession, project: project, layout: layout)
+        self.chalkingSession = updatedSession
+        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+            project: project,
+            layout: layout,
+            confidence: updatedSession.trackingConfidence
+        )
     }
 
     func cycleTrackingConfidence() {
@@ -279,11 +316,18 @@ final class ProjectStore: ObservableObject {
               let layout = selectedChalkingLayout,
               let chalkingSession else { return }
 
-        self.chalkingSession = venueTrackingService.cycleConfidence(chalkingSession, project: project, layout: layout)
+        let updatedSession = venueTrackingService.cycleConfidence(chalkingSession, project: project, layout: layout)
+        self.chalkingSession = updatedSession
+        chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
+            project: project,
+            layout: layout,
+            confidence: updatedSession.trackingConfidence
+        )
     }
 
     func endChalkingSession() {
         chalkingSession = nil
+        chalkingTrackingSnapshot = nil
     }
 
     func selectedLayoutRotationDegrees() -> Double {
@@ -318,6 +362,19 @@ final class ProjectStore: ObservableObject {
         return "\(percentage)% ready"
     }
 
+    func planningRelocalizationLabel() -> String {
+        relocalizationLabel(for: planningTrackingSnapshot?.relocalizationState ?? .unavailable)
+    }
+
+    func chalkingRelocalizationLabel() -> String {
+        relocalizationLabel(for: chalkingTrackingSnapshot?.relocalizationState ?? .unavailable)
+    }
+
+    func latestVenueTrackingAsset() -> VenueTrackingAssetRecord? {
+        guard let venueScanID = selectedProject?.venueScan.id else { return nil }
+        return venueTrackingAssetStore.latestAsset(for: venueScanID)
+    }
+
     func availableMockLandmarks() -> [String] {
         [
             "Fence line",
@@ -340,6 +397,30 @@ final class ProjectStore: ObservableObject {
         guard let layoutIndex = projects[projectIndex].layouts.firstIndex(where: { $0.id == layoutID }) else { return }
 
         update(&projects[projectIndex].layouts[layoutIndex])
+    }
+
+    private func venueScanDraft(session: VenueScanSessionState, original: VenueScan) -> VenueScan {
+        VenueScan(
+            id: original.id,
+            venueName: original.venueName,
+            landmarkNotes: session.capturedLandmarks,
+            recommendedRelocalizationHints: [session.recommendedHint],
+            scanCoverageScore: session.readinessScore,
+            worldMapData: original.worldMapData
+        )
+    }
+
+    private func relocalizationLabel(for state: RelocalizationState) -> String {
+        switch state {
+        case .unavailable:
+            return "No relocalization asset"
+        case .scanning:
+            return "Scanning for relocalization"
+        case .localized:
+            return "Relocalized"
+        case .limited:
+            return "Limited relocalization"
+        }
     }
 
     private func nextLayoutName(for pitchSize: PitchSize, layouts: [FieldLayout]) -> String {

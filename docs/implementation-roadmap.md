@@ -10,6 +10,7 @@
 - The chalking screen now runs against a mock tracking/session model with progress and confidence states, which gives us a non-AR path to exercise the future trolley workflow.
 - The planning screen now also includes a mock venue-scan workspace so landmark capture, coverage progression, and scan locking can be exercised before real camera-based scanning exists.
 - The chalking screen now derives a venue-aware preflight from the saved scan so start hints, readiness, and recovery expectations reflect the planning work.
+- The app now has an explicit AR boundary layer with relocalization snapshots and local tracking-asset records kept separate from the exported pitch package.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
@@ -17,7 +18,7 @@ The current development focus is to make planning and chalking flows realistic b
 ### In progress now
 - Add a clearer venue-level workspace that connects planning edits, venue scanning, and future relocalization.
 - Prepare the app shell for signed iPhone deployment by keeping import/export and planning flows independent of simulator-only behavior.
-- Introduce mockable scanning, tracking, and relocalization services so the workflow can be exercised without camera-based AR.
+- Introduce mockable scanning, tracking, relocalization, and local AR-asset persistence services so the workflow can be exercised without camera-based AR.
 
 ### Next after this slice
 - Add AR-facing abstractions for venue scanning, relocalization confidence, and chalking guidance state.

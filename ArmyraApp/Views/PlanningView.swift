@@ -82,6 +82,25 @@ struct PlanningView: View {
                     .background(.blue.opacity(0.12), in: Capsule())
             }
 
+            if let snapshot = store.planningTrackingSnapshot {
+                Label(store.planningRelocalizationLabel(), systemImage: "dot.scope")
+                    .font(.subheadline.weight(.semibold))
+
+                Text(snapshot.activeHint)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let asset = store.latestVenueTrackingAsset() {
+                Text("Latest local tracking asset: \(asset.localStorageKey)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("No local tracking asset saved yet. Finalizing a scan will create one for future relocalization.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             if let session = store.venueScanSession {
                 Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
                     .font(.subheadline)
