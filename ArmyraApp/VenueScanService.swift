@@ -169,9 +169,9 @@ struct MockVenueScanService: VenueScanService {
             return "Capture a second landmark-bearing edge before locking the scan. One-sided coverage is not robust enough."
         }
 
-        if let suggestedZones, suggestedZones.isEmpty == false,
+        if let recommendedZones, recommendedZones.isEmpty == false,
            inferredZoneCount(for: landmarks) <= 1 {
-            return "Capture another durable reference on the \(suggestedZones) side before locking the scan."
+            return "Capture another durable reference on the \(recommendedZones) side before locking the scan."
         }
 
         if !hasStartCandidate {
