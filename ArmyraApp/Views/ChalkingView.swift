@@ -8,22 +8,89 @@ struct ChalkingView: View {
         NavigationStack {
             Group {
                 if let project = store.selectedProject {
-                    List(project.layouts) { layout in
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text(layout.name)
-                                    .font(.headline)
-                                Spacer()
-                                Text(statusText(for: layout))
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(statusColor(for: layout))
-                            }
+                    List {
+                        Section("Choose Layout") {
+                            ForEach(project.layouts) { layout in
+                                Button {
+                                    store.selectChalkingLayout(layout.id)
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(layout.name)
+                                                .font(.headline)
+                                            Text(chalkingInstruction(for: layout, in: project))
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
 
-                            Text(chalkingInstruction(for: layout, in: project))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                        Spacer()
+
+                                        if store.selectedChalkingLayout?.id == layout.id {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.blue)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .padding(.vertical, 4)
+
+                        if let session = store.chalkingSession {
+                            Section("Active Session") {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(session.layoutName)
+                                                .font(.headline)
+                                            Text(confidenceLabel(session.trackingConfidence))
+                                                .font(.caption.weight(.semibold))
+                                                .foregroundStyle(confidenceColor(session.trackingConfidence))
+                                        }
+                                        Spacer()
+                                        Text("\(session.completedSegments)/\(session.totalSegments)")
+                                            .font(.title3.monospacedDigit())
+                                    }
+
+                                    ProgressView(value: session.progressFraction)
+                                        .tint(confidenceColor(session.trackingConfidence))
+
+                                    Text(session.recommendedHint)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+
+                                    HStack {
+                                        Button("Advance Segment") {
+                                            store.advanceChalkingSession()
+                                        }
+                                        .buttonStyle(.borderedProminent)
+
+                                        Button("Cycle Confidence") {
+                                            store.cycleTrackingConfidence()
+                                        }
+                                        .buttonStyle(.bordered)
+                                    }
+
+                                    Button("End Session", role: .destructive) {
+                                        store.endChalkingSession()
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                            }
+                        } else {
+                            Section("Session") {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("No chalking session is active.")
+                                        .foregroundStyle(.secondary)
+
+                                    Button("Start Chalking Session") {
+                                        store.startChalkingSession()
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(store.selectedChalkingLayout == nil)
+                                }
+                                .padding(.vertical, 6)
+                            }
+                        }
                     }
                 } else {
                     ContentUnavailableView("No pitch package loaded", systemImage: "square.and.arrow.down")
@@ -38,21 +105,25 @@ struct ChalkingView: View {
         return "Begin with the perimeter for \(layout.name). \(firstHint)"
     }
 
-    private func statusText(for layout: FieldLayout) -> String {
-        switch layout.lockMode {
-        case .center:
-            return "Relocalize"
-        case .corner:
-            return "Ready"
+    private func confidenceLabel(_ confidence: TrackingConfidence) -> String {
+        switch confidence {
+        case .good:
+            return "Tracking good"
+        case .warning:
+            return "Tracking warning"
+        case .recover:
+            return "Recovery needed"
         }
     }
 
-    private func statusColor(for layout: FieldLayout) -> Color {
-        switch layout.lockMode {
-        case .center:
-            return .orange
-        case .corner:
+    private func confidenceColor(_ confidence: TrackingConfidence) -> Color {
+        switch confidence {
+        case .good:
             return .green
+        case .warning:
+            return .orange
+        case .recover:
+            return .red
         }
     }
 }

@@ -7,14 +7,15 @@
 - The planning workspace can now create layouts from templates, inspect export payloads, and edit selected layout dimensions, offsets, rotation, and lock mode.
 - The app now has basic `*.armyrafield` import/export plumbing and project duplication support, which moves it closer to real device testing once Apple signing is configured.
 - The planning screen now includes a top-down layout preview and basic overlap detection so placement changes can be reasoned about without AR.
+- The chalking screen now runs against a mock tracking/session model with progress and confidence states, which gives us a non-AR path to exercise the future trolley workflow.
 
-## Active milestone: Planning workflow foundation
-The current development focus is to move from a static preview app toward a usable planning workflow.
+## Active milestone: Pre-AR workflow foundation
+The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
 
 ### In progress now
-- Add naming and internal-marking editing controls for each selected layout.
 - Add a clearer venue-level workspace summary that shows overlap and fit considerations.
 - Prepare the app shell for signed iPhone deployment by keeping import/export and planning flows independent of simulator-only behavior.
+- Introduce mockable tracking and relocalization services so the chalking workflow can be exercised without camera-based AR.
 
 ### Next after this slice
 - Add AR-facing abstractions for venue scanning, relocalization confidence, and chalking guidance state.
@@ -39,6 +40,7 @@ The current development focus is to move from a static preview app toward a usab
 - Introduce a venue scan service abstraction that can later wrap `ARKit`/`ARWorldMap`.
 - Model tracking confidence and relocalization hints in a way the chalking UI can react to.
 - Keep AR-specific persistence isolated from app-domain package models.
+- Swap the mock chalking/tracking service for a real implementation once landmark scanning and relocalization are ready.
 
 ## Working assumptions
 - The app remains iPhone-first and offline-first.

@@ -1,0 +1,84 @@
+import ArmyraCore
+
+protocol VenueTrackingService {
+    func startSession(project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
+    func advance(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
+    func cycleConfidence(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState
+}
+
+struct MockVenueTrackingService: VenueTrackingService {
+    func startSession(project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState {
+        let geometry = FieldGeometryBuilder.build(for: layout)
+        let hint = project.venueScan.recommendedRelocalizationHints.first ?? "Face a known landmark edge before starting."
+
+        return ChalkingSessionState(
+            layoutID: layout.id,
+            layoutName: layout.name,
+            completedSegments: 0,
+            totalSegments: max(geometry.guidePath.count, 1),
+            trackingConfidence: .good,
+            recommendedHint: hint
+        )
+    }
+
+    func advance(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState {
+        let geometry = FieldGeometryBuilder.build(for: layout)
+        let totalSegments = max(geometry.guidePath.count, 1)
+        let nextCompletedSegments = min(session.completedSegments + 1, totalSegments)
+
+        return ChalkingSessionState(
+            layoutID: layout.id,
+            layoutName: layout.name,
+            completedSegments: nextCompletedSegments,
+            totalSegments: totalSegments,
+            trackingConfidence: session.trackingConfidence,
+            recommendedHint: guidanceHint(
+                for: session.trackingConfidence,
+                project: project,
+                remainingSegments: max(totalSegments - nextCompletedSegments, 0)
+            )
+        )
+    }
+
+    func cycleConfidence(_ session: ChalkingSessionState, project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState {
+        let nextConfidence: TrackingConfidence
+        switch session.trackingConfidence {
+        case .good:
+            nextConfidence = .warning
+        case .warning:
+            nextConfidence = .recover
+        case .recover:
+            nextConfidence = .good
+        }
+
+        return ChalkingSessionState(
+            layoutID: layout.id,
+            layoutName: layout.name,
+            completedSegments: session.completedSegments,
+            totalSegments: session.totalSegments,
+            trackingConfidence: nextConfidence,
+            recommendedHint: guidanceHint(
+                for: nextConfidence,
+                project: project,
+                remainingSegments: max(session.totalSegments - session.completedSegments, 0)
+            )
+        )
+    }
+
+    private func guidanceHint(
+        for confidence: TrackingConfidence,
+        project: ProjectPackage,
+        remainingSegments: Int
+    ) -> String {
+        let recoveryHint = project.venueScan.recommendedRelocalizationHints.first ?? "Return to a known landmark edge."
+
+        switch confidence {
+        case .good:
+            return remainingSegments == 0 ? "Layout complete. Review the line edges before saving." : "Tracking is stable. Continue to the next chalk segment."
+        case .warning:
+            return "Tracking is softening. Slow down and glance back toward the registered landmarks."
+        case .recover:
+            return "Pause chalking and relocalize. \(recoveryHint)"
+        }
+    }
+}

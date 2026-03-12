@@ -7,9 +7,13 @@ final class ProjectStore: ObservableObject {
     @Published var selectedProjectID: UUID?
     @Published var selectedTemplateID: UUID?
     @Published var selectedLayoutID: UUID?
+    @Published var selectedChalkingLayoutID: UUID?
     @Published var exportPreview: ExportPreview?
     @Published var exportDocument: ProjectPackageDocument?
     @Published var importErrorMessage: String?
+    @Published var chalkingSession: ChalkingSessionState?
+
+    private let venueTrackingService: VenueTrackingService
 
     struct ExportPreview: Identifiable {
         let id = UUID()
@@ -17,11 +21,16 @@ final class ProjectStore: ObservableObject {
         let payload: String
     }
 
-    init(projects: [ProjectPackage]) {
+    init(
+        projects: [ProjectPackage],
+        venueTrackingService: VenueTrackingService = MockVenueTrackingService()
+    ) {
         self.projects = projects
+        self.venueTrackingService = venueTrackingService
         self.selectedProjectID = projects.first?.id
         self.selectedTemplateID = projects.first?.templates.first?.id
         self.selectedLayoutID = projects.first?.layouts.first?.id
+        self.selectedChalkingLayoutID = projects.first?.layouts.first?.id
     }
 
     var selectedProject: ProjectPackage? {
@@ -38,10 +47,17 @@ final class ProjectStore: ObservableObject {
         return project.layouts.first(where: { $0.id == selectedLayoutID }) ?? project.layouts.first
     }
 
+    var selectedChalkingLayout: FieldLayout? {
+        guard let project = selectedProject else { return nil }
+        return project.layouts.first(where: { $0.id == selectedChalkingLayoutID }) ?? project.layouts.first
+    }
+
     func selectProject(_ projectID: UUID) {
         selectedProjectID = projectID
         selectedTemplateID = selectedProject?.templates.first?.id
         selectedLayoutID = selectedProject?.layouts.first?.id
+        selectedChalkingLayoutID = selectedProject?.layouts.first?.id
+        chalkingSession = nil
     }
 
     func selectLayout(_ layoutID: UUID) {
@@ -204,6 +220,35 @@ final class ProjectStore: ObservableObject {
 
     func handleImportFailure(_ error: Error) {
         importErrorMessage = error.localizedDescription
+    }
+
+    func selectChalkingLayout(_ layoutID: UUID) {
+        selectedChalkingLayoutID = layoutID
+    }
+
+    func startChalkingSession() {
+        guard let project = selectedProject, let layout = selectedChalkingLayout else { return }
+        chalkingSession = venueTrackingService.startSession(project: project, layout: layout)
+    }
+
+    func advanceChalkingSession() {
+        guard let project = selectedProject,
+              let layout = selectedChalkingLayout,
+              let chalkingSession else { return }
+
+        self.chalkingSession = venueTrackingService.advance(chalkingSession, project: project, layout: layout)
+    }
+
+    func cycleTrackingConfidence() {
+        guard let project = selectedProject,
+              let layout = selectedChalkingLayout,
+              let chalkingSession else { return }
+
+        self.chalkingSession = venueTrackingService.cycleConfidence(chalkingSession, project: project, layout: layout)
+    }
+
+    func endChalkingSession() {
+        chalkingSession = nil
     }
 
     func selectedLayoutRotationDegrees() -> Double {
