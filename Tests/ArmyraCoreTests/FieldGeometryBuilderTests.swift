@@ -18,7 +18,7 @@ final class FieldGeometryBuilderTests: XCTestCase {
         XCTAssertEqual(geometry.circles.count, 4)
     }
 
-    func testRotationAndTranslationAreApplied() {
+    func testRotationAndTranslationAreApplied() throws {
         let template = FieldTemplateLibrary.fiveAside
         let layout = FieldLayout(
             name: "5A",
