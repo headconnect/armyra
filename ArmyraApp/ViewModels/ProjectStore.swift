@@ -390,6 +390,40 @@ final class ProjectStore: ObservableObject {
         return venueTrackingAssetStore.latestAsset(for: venueScanID)
     }
 
+    func planningDiagnostics() -> ARSessionDiagnostics? {
+        guard let project = selectedProject else { return nil }
+        let asset = latestVenueTrackingAsset()
+        let payload = asset.flatMap { venueTrackingAssetStore.payload(for: $0) }
+        let diagnostics = arSessionCoordinator.currentDiagnostics(for: project.venueScan, asset: asset, payload: payload)
+
+        return ARSessionDiagnostics(
+            mode: venueScanSession == nil ? .idle : .planning,
+            relocalizationState: diagnostics.relocalizationState,
+            readinessScore: diagnostics.readinessScore,
+            hasLocalAsset: diagnostics.hasLocalAsset,
+            payloadSizeBytes: diagnostics.payloadSizeBytes,
+            activeHint: diagnostics.activeHint,
+            lastErrorDescription: diagnostics.lastErrorDescription
+        )
+    }
+
+    func chalkingDiagnostics() -> ARSessionDiagnostics? {
+        guard let project = selectedProject else { return nil }
+        let asset = latestVenueTrackingAsset()
+        let payload = asset.flatMap { venueTrackingAssetStore.payload(for: $0) }
+        let diagnostics = arSessionCoordinator.currentDiagnostics(for: project.venueScan, asset: asset, payload: payload)
+
+        return ARSessionDiagnostics(
+            mode: chalkingSession == nil ? .idle : .chalking,
+            relocalizationState: diagnostics.relocalizationState,
+            readinessScore: diagnostics.readinessScore,
+            hasLocalAsset: diagnostics.hasLocalAsset,
+            payloadSizeBytes: diagnostics.payloadSizeBytes,
+            activeHint: diagnostics.activeHint,
+            lastErrorDescription: diagnostics.lastErrorDescription
+        )
+    }
+
     func availableMockLandmarks() -> [String] {
         [
             "Fence line",

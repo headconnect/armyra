@@ -101,6 +101,13 @@ struct PlanningView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if let diagnostics = store.planningDiagnostics() {
+                diagnosticsCard(
+                    title: "AR Diagnostics",
+                    diagnostics: diagnostics
+                )
+            }
+
             if store.isPersistingVenueTrackingAsset {
                 Label("Saving local relocalization asset...", systemImage: "arrow.triangle.2.circlepath")
                     .font(.caption)
@@ -449,5 +456,30 @@ struct PlanningView: View {
         }
 
         return AnyShapeStyle(.thinMaterial)
+    }
+
+    @ViewBuilder
+    private func diagnosticsCard(title: String, diagnostics: ARSessionDiagnostics) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text("Mode: \(diagnostics.mode.rawValue.capitalized)")
+                .font(.caption)
+            Text("Payload: \(diagnostics.payloadSizeBytes) bytes")
+                .font(.caption)
+            Text("Asset saved: \(diagnostics.hasLocalAsset ? "yes" : "no")")
+                .font(.caption)
+            Text("Readiness: \(Int((diagnostics.readinessScore * 100).rounded()))%")
+                .font(.caption)
+
+            if let lastErrorDescription = diagnostics.lastErrorDescription {
+                Text("Last error: \(lastErrorDescription)")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.top, 4)
     }
 }

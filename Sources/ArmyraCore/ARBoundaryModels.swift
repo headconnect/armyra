@@ -7,6 +7,12 @@ public enum RelocalizationState: String, Codable, CaseIterable, Sendable {
     case limited
 }
 
+public enum ARSessionMode: String, Codable, CaseIterable, Sendable {
+    case idle
+    case planning
+    case chalking
+}
+
 public struct VenueTrackingSnapshot: Equatable, Sendable {
     public var venueScanID: UUID
     public var relocalizationState: RelocalizationState
@@ -45,5 +51,33 @@ public struct VenueTrackingAssetRecord: Codable, Equatable, Identifiable, Sendab
         self.createdAt = createdAt
         self.localStorageKey = localStorageKey
         self.readinessScore = readinessScore
+    }
+}
+
+public struct ARSessionDiagnostics: Equatable, Sendable {
+    public var mode: ARSessionMode
+    public var relocalizationState: RelocalizationState
+    public var readinessScore: Double
+    public var hasLocalAsset: Bool
+    public var payloadSizeBytes: Int
+    public var activeHint: String
+    public var lastErrorDescription: String?
+
+    public init(
+        mode: ARSessionMode,
+        relocalizationState: RelocalizationState,
+        readinessScore: Double,
+        hasLocalAsset: Bool,
+        payloadSizeBytes: Int,
+        activeHint: String,
+        lastErrorDescription: String?
+    ) {
+        self.mode = mode
+        self.relocalizationState = relocalizationState
+        self.readinessScore = readinessScore
+        self.hasLocalAsset = hasLocalAsset
+        self.payloadSizeBytes = payloadSizeBytes
+        self.activeHint = activeHint
+        self.lastErrorDescription = lastErrorDescription
     }
 }

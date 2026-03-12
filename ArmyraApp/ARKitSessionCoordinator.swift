@@ -6,6 +6,8 @@ import ArmyraCore
 final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDelegate {
     private let session = ARSession()
     private let fallback = MockARSessionCoordinator()
+    private var sessionMode: ARSessionMode = .idle
+    private var lastErrorDescription: String?
 
     override init() {
         super.init()
@@ -13,6 +15,8 @@ final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDe
     }
 
     func startPlanningSession(for venueScan: VenueScan) {
+        sessionMode = .planning
+        lastErrorDescription = nil
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = [.horizontal]
         configuration.worldAlignment = .gravity
@@ -20,6 +24,8 @@ final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDe
     }
 
     func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {
+        sessionMode = .chalking
+        lastErrorDescription = nil
         let configuration = ARWorldTrackingConfiguration()
         configuration.worldAlignment = .gravity
 
@@ -48,7 +54,26 @@ final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDe
     }
 
     func stopSession() {
+        sessionMode = .idle
         session.pause()
+    }
+
+    func currentDiagnostics(
+        for venueScan: VenueScan,
+        asset: VenueTrackingAssetRecord?,
+        payload: Data?
+    ) -> ARSessionDiagnostics {
+        let snapshot = planningSnapshot(for: venueScan)
+
+        return ARSessionDiagnostics(
+            mode: sessionMode,
+            relocalizationState: snapshot.relocalizationState,
+            readinessScore: snapshot.readinessScore,
+            hasLocalAsset: asset != nil,
+            payloadSizeBytes: payload?.count ?? 0,
+            activeHint: snapshot.activeHint,
+            lastErrorDescription: lastErrorDescription
+        )
     }
 
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot {
@@ -107,8 +132,7 @@ final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDe
     }
 
     func session(_ session: ARSession, didFailWithError error: Error) {
-        // Placeholder for future error surfacing once the AR session is wired into the UI.
-        print("ARSession failed: \(error.localizedDescription)")
+        lastErrorDescription = error.localizedDescription
     }
 
     private func relocalizationState(

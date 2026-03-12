@@ -70,6 +70,10 @@ struct ChalkingView: View {
                                             .foregroundStyle(.secondary)
                                     }
 
+                                    if let diagnostics = store.chalkingDiagnostics() {
+                                        diagnosticsView(diagnostics)
+                                    }
+
                                     ForEach(preflight.checklist, id: \.self) { item in
                                         Label(item, systemImage: "checkmark.circle")
                                             .font(.subheadline)
@@ -196,6 +200,27 @@ struct ChalkingView: View {
             return .orange
         case .low:
             return .red
+        }
+    }
+
+    @ViewBuilder
+    private func diagnosticsView(_ diagnostics: ARSessionDiagnostics) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Diagnostics")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("Mode: \(diagnostics.mode.rawValue.capitalized)")
+                .font(.caption)
+            Text("Payload: \(diagnostics.payloadSizeBytes) bytes")
+                .font(.caption)
+            Text("Asset saved: \(diagnostics.hasLocalAsset ? "yes" : "no")")
+                .font(.caption)
+
+            if let lastErrorDescription = diagnostics.lastErrorDescription {
+                Text("Last error: \(lastErrorDescription)")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
         }
     }
 }

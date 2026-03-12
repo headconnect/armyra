@@ -13,6 +13,7 @@
 - The app now has an explicit AR boundary layer with relocalization snapshots and local tracking-asset records kept separate from the exported pitch package.
 - The app now also has an iOS-only `ARKit` session coordinator stub behind the same protocol, so a real camera-backed implementation can replace the mock path incrementally.
 - Local tracking assets now have a file-backed store and the `ARKit` coordinator starts planning/chalking sessions with `ARWorldTrackingConfiguration`, preparing the path toward real relocalization.
+- Planning and chalking now surface AR diagnostics in the UI so device testing can verify session mode, saved asset presence, payload size, and last AR error without attaching a debugger.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.

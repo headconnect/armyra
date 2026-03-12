@@ -6,6 +6,11 @@ protocol ARSessionCoordinator {
     func startChalkingSession(for venueScan: VenueScan, assetData: Data?)
     func capturePlanningAsset(for venueScan: VenueScan) async -> (VenueTrackingAssetRecord, Data?)
     func stopSession()
+    func currentDiagnostics(
+        for venueScan: VenueScan,
+        asset: VenueTrackingAssetRecord?,
+        payload: Data?
+    ) -> ARSessionDiagnostics
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot
     func recordPlanningAsset(for venueScan: VenueScan) -> VenueTrackingAssetRecord
     func chalkingSnapshot(
@@ -26,6 +31,10 @@ enum DefaultARSessionCoordinatorFactory {
 }
 
 struct MockARSessionCoordinator: ARSessionCoordinator {
+    private var sessionMode: ARSessionMode {
+        .idle
+    }
+
     func startPlanningSession(for venueScan: VenueScan) {}
 
     func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {}
@@ -35,6 +44,24 @@ struct MockARSessionCoordinator: ARSessionCoordinator {
     }
 
     func stopSession() {}
+
+    func currentDiagnostics(
+        for venueScan: VenueScan,
+        asset: VenueTrackingAssetRecord?,
+        payload: Data?
+    ) -> ARSessionDiagnostics {
+        let snapshot = planningSnapshot(for: venueScan)
+
+        return ARSessionDiagnostics(
+            mode: sessionMode,
+            relocalizationState: snapshot.relocalizationState,
+            readinessScore: snapshot.readinessScore,
+            hasLocalAsset: asset != nil,
+            payloadSizeBytes: payload?.count ?? 0,
+            activeHint: snapshot.activeHint,
+            lastErrorDescription: nil
+        )
+    }
 
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot {
         VenueTrackingSnapshot(
