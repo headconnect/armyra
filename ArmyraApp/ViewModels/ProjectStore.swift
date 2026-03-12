@@ -31,7 +31,7 @@ final class ProjectStore: ObservableObject {
         projects: [ProjectPackage],
         venueTrackingService: VenueTrackingService = MockVenueTrackingService(),
         venueScanService: VenueScanService = MockVenueScanService(),
-        arSessionCoordinator: ARSessionCoordinator = MockARSessionCoordinator(),
+        arSessionCoordinator: ARSessionCoordinator = DefaultARSessionCoordinatorFactory.make(),
         venueTrackingAssetStore: VenueTrackingAssetStore = InMemoryVenueTrackingAssetStore()
     ) {
         self.projects = projects

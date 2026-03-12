@@ -11,6 +11,16 @@ protocol ARSessionCoordinator {
     ) -> VenueTrackingSnapshot
 }
 
+enum DefaultARSessionCoordinatorFactory {
+    static func make() -> ARSessionCoordinator {
+        #if canImport(ARKit) && os(iOS)
+        return ARKitSessionCoordinator()
+        #else
+        return MockARSessionCoordinator()
+        #endif
+    }
+}
+
 struct MockARSessionCoordinator: ARSessionCoordinator {
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot {
         VenueTrackingSnapshot(

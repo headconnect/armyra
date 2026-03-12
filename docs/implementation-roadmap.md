@@ -11,6 +11,7 @@
 - The planning screen now also includes a mock venue-scan workspace so landmark capture, coverage progression, and scan locking can be exercised before real camera-based scanning exists.
 - The chalking screen now derives a venue-aware preflight from the saved scan so start hints, readiness, and recovery expectations reflect the planning work.
 - The app now has an explicit AR boundary layer with relocalization snapshots and local tracking-asset records kept separate from the exported pitch package.
+- The app now also has an iOS-only `ARKit` session coordinator stub behind the same protocol, so a real camera-backed implementation can replace the mock path incrementally.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
