@@ -22,7 +22,7 @@ final class PlanningReadinessTests: XCTestCase {
         XCTAssertFalse(summary.parentSafe)
     }
 
-    func testTightPitchSpacingProducesCaution() {
+    func testTightPitchSpacingCanEscalateWhenLaneIsTooNarrow() {
         let template = FieldTemplateLibrary.fiveAside
         let project = ProjectPackage(
             projectName: "Community Grounds",
@@ -49,8 +49,9 @@ final class PlanningReadinessTests: XCTestCase {
 
         let summary = PlanningReadinessAnalyzer.summarize(project: project)
 
-        XCTAssertEqual(summary.level, .caution)
+        XCTAssertEqual(summary.level, .needsWork)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("very close") }))
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("practical chalking lane") }))
     }
 
     func testNarrowChalkingLaneCanEscalateToNeedsWork() {
