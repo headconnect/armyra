@@ -51,6 +51,6 @@ final class FieldLayoutAnalysisTests: XCTestCase {
 
         XCTAssertEqual(issues.count, 1)
         XCTAssertEqual(issues.first?.axis, .horizontal)
-        XCTAssertEqual(issues.first?.laneWidthMeters, 4, accuracy: 0.000_001)
+        XCTAssertEqual(issues.first?.laneWidthMeters ?? 0, 4, accuracy: 0.000_001)
     }
 }
