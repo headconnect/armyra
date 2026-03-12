@@ -45,6 +45,7 @@
   - See a handoff checklist showing whether the scan includes explicit start-side, recovery-side, and general-reference landmarks
   - Get warned if the chosen start/recovery edges are not backed by the corresponding tagged landmarks
   - See when captured landmarks are too clustered around one part of the venue to make a robust handoff
+  - Get a concrete next-capture suggestion when landmark spread is weak, such as capturing a durable reference on another side of the venue
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

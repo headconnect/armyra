@@ -163,9 +163,15 @@ struct MockVenueScanService: VenueScanService {
     ) -> String {
         let hasStartCandidate = landmarks.contains(where: { $0.role == .startCandidate })
         let hasRecoveryCandidate = landmarks.contains(where: { $0.role == .recoveryCandidate })
+        let recommendedZones = suggestedCaptureZones(from: landmarks)
 
         if coveredSides <= 1 {
             return "Capture a second landmark-bearing edge before locking the scan. One-sided coverage is not robust enough."
+        }
+
+        if let suggestedZones, suggestedZones.isEmpty == false,
+           inferredZoneCount(for: landmarks) <= 1 {
+            return "Capture another durable reference on the \(suggestedZones) side before locking the scan."
         }
 
         if !hasStartCandidate {
@@ -227,6 +233,44 @@ struct MockVenueScanService: VenueScanService {
         }
 
         return "the \(normalized) side"
+    }
+
+    private func suggestedCaptureZones(from landmarks: [VenueLandmark]) -> String? {
+        let zones = inferredZones(from: landmarks)
+        guard zones.isEmpty == false else { return nil }
+
+        let directionalZones = ["north", "south", "east", "west"]
+        let presentDirectionalZones = directionalZones.filter { zones.contains($0) }
+        let missingZones: [String]
+        if presentDirectionalZones.isEmpty == false {
+            missingZones = directionalZones.filter { !zones.contains($0) }
+        } else {
+            let venueZones = ["clubhouse", "car park", "forest", "bench", "fence"]
+            missingZones = venueZones.filter { !zones.contains($0) }
+        }
+
+        guard missingZones.isEmpty == false else { return nil }
+        return missingZones.prefix(2).joined(separator: " or ")
+    }
+
+    private func inferredZoneCount(for landmarks: [VenueLandmark]) -> Int {
+        inferredZones(from: landmarks).count
+    }
+
+    private func inferredZones(from landmarks: [VenueLandmark]) -> [String] {
+        Array(Set(landmarks.compactMap { inferZone(from: $0.label) })).sorted()
+    }
+
+    private func inferZone(from label: String) -> String? {
+        let normalized = normalizeLabel(label)
+
+        let directionalZones = ["west", "east", "north", "south"]
+        if let direction = directionalZones.first(where: { normalized.contains($0) }) {
+            return direction
+        }
+
+        let venueZones = ["clubhouse", "car park", "forest", "bench", "fence"]
+        return venueZones.first(where: { normalized.contains($0) })
     }
 
     private func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {

@@ -168,5 +168,7 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("clustered around one part") }))
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("same part of the venue") }))
         XCTAssertEqual(summary.inferredLandmarkZoneCount, 1)
+        XCTAssertTrue(summary.suggestedCaptureZones.contains("north"))
+        XCTAssertTrue(summary.suggestedCaptureZones.contains("east"))
     }
 }

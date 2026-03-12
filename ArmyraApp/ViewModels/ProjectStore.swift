@@ -612,6 +612,18 @@ final class ProjectStore: ObservableObject {
         ]
     }
 
+    func venueSpreadGuidanceText() -> String? {
+        guard let summary = venueScanReadinessSummary(),
+              !summary.suggestedCaptureZones.isEmpty,
+              summary.inferableLandmarkCount > 0,
+              summary.inferredLandmarkZoneCount <= 2 else {
+            return nil
+        }
+
+        let suggestedZones = summary.suggestedCaptureZones.prefix(2).joined(separator: " or ")
+        return "Next capture pass: add a durable landmark on the \(suggestedZones) side of the venue."
+    }
+
     func planningRelocalizationLabel() -> String {
         relocalizationLabel(for: planningTrackingSnapshot?.relocalizationState ?? .unavailable)
     }

@@ -119,6 +119,12 @@ struct PlanningView: View {
                         }
                     }
 
+                    if let spreadGuidance = store.venueSpreadGuidanceText() {
+                        Label(spreadGuidance, systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     ForEach(scanReadiness.issues) { issue in
                         Label(
                             issue.message,

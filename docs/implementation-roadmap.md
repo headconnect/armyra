@@ -29,6 +29,7 @@
 - Venue-scan readiness now scores those landmark roles directly and shows a handoff checklist, so a scan is not considered parent-safe just because edge labels happen to exist.
 - Venue-scan readiness now also checks that the chosen start and recovery edges are backed by correctly tagged landmarks, which reduces the risk of handoff drift from manual edge overrides.
 - Venue-scan readiness now also checks whether captured landmarks are actually spread around the venue, which helps catch scans that look complete on paper but are still clustered on one side in practice.
+- The planning workspace now turns poor landmark spread into an explicit next capture suggestion, so the rep gets a concrete “go capture the east/north side” style instruction instead of only a warning.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.

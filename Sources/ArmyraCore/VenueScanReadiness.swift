@@ -28,6 +28,7 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
     public var generalLandmarkCount: Int
     public var inferredLandmarkZoneCount: Int
     public var inferableLandmarkCount: Int
+    public var suggestedCaptureZones: [String]
     public var issues: [VenueScanReadinessIssue]
 
     public init(
@@ -40,6 +41,7 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         generalLandmarkCount: Int,
         inferredLandmarkZoneCount: Int,
         inferableLandmarkCount: Int,
+        suggestedCaptureZones: [String],
         issues: [VenueScanReadinessIssue]
     ) {
         self.level = level
@@ -51,6 +53,7 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         self.generalLandmarkCount = generalLandmarkCount
         self.inferredLandmarkZoneCount = inferredLandmarkZoneCount
         self.inferableLandmarkCount = inferableLandmarkCount
+        self.suggestedCaptureZones = suggestedCaptureZones
         self.issues = issues
     }
 }
@@ -76,6 +79,10 @@ public enum VenueScanReadinessAnalyzer {
             generalLandmarkCount: roleCounts.generalLandmarkCount,
             inferredLandmarkZoneCount: zoneSpread.zoneCount,
             inferableLandmarkCount: zoneSpread.inferableLandmarkCount,
+            suggestedCaptureZones: suggestedCaptureZones(
+                presentZones: zoneSpread.presentZones,
+                inferableLandmarkCount: zoneSpread.inferableLandmarkCount
+            ),
             taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
     }
@@ -100,6 +107,10 @@ public enum VenueScanReadinessAnalyzer {
             generalLandmarkCount: roleCounts.generalLandmarkCount,
             inferredLandmarkZoneCount: zoneSpread.zoneCount,
             inferableLandmarkCount: zoneSpread.inferableLandmarkCount,
+            suggestedCaptureZones: suggestedCaptureZones(
+                presentZones: zoneSpread.presentZones,
+                inferableLandmarkCount: zoneSpread.inferableLandmarkCount
+            ),
             taggedRoleZoneCount: zoneSpread.taggedRoleZoneCount
         )
     }
@@ -120,6 +131,7 @@ public enum VenueScanReadinessAnalyzer {
         generalLandmarkCount: Int,
         inferredLandmarkZoneCount: Int,
         inferableLandmarkCount: Int,
+        suggestedCaptureZones: [String],
         taggedRoleZoneCount: Int
     ) -> VenueScanReadinessSummary {
         var issues: [VenueScanReadinessIssue] = []
@@ -317,6 +329,7 @@ public enum VenueScanReadinessAnalyzer {
             generalLandmarkCount: generalLandmarkCount,
             inferredLandmarkZoneCount: inferredLandmarkZoneCount,
             inferableLandmarkCount: inferableLandmarkCount,
+            suggestedCaptureZones: suggestedCaptureZones,
             issues: issues
         )
     }
@@ -335,18 +348,34 @@ public enum VenueScanReadinessAnalyzer {
     private static func zoneSpread(for landmarks: [VenueLandmark]) -> (
         zoneCount: Int,
         inferableLandmarkCount: Int,
-        taggedRoleZoneCount: Int
+        taggedRoleZoneCount: Int,
+        presentZones: [String]
     ) {
         let inferredZones = landmarks.compactMap { inferZone(from: $0.label) }
         let taggedRoleZones = landmarks
             .filter { $0.role != .general }
             .compactMap { inferZone(from: $0.label) }
+        let uniqueZones = Array(Set(inferredZones)).sorted()
 
         return (
-            zoneCount: Set(inferredZones).count,
+            zoneCount: uniqueZones.count,
             inferableLandmarkCount: inferredZones.count,
-            taggedRoleZoneCount: Set(taggedRoleZones).count
+            taggedRoleZoneCount: Set(taggedRoleZones).count,
+            presentZones: uniqueZones
         )
+    }
+
+    private static func suggestedCaptureZones(presentZones: [String], inferableLandmarkCount: Int) -> [String] {
+        guard inferableLandmarkCount > 0 else { return [] }
+
+        let directionalZones = ["north", "south", "east", "west"]
+        let presentDirectionalZones = directionalZones.filter { presentZones.contains($0) }
+        if !presentDirectionalZones.isEmpty {
+            return directionalZones.filter { !presentZones.contains($0) }
+        }
+
+        let venueZones = ["clubhouse", "car park", "forest", "bench", "fence"]
+        return venueZones.filter { !presentZones.contains($0) }
     }
 
     private static func roleMatches(label: String?, role: LandmarkRole, landmarks: [VenueLandmark]) -> Bool {
