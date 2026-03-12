@@ -72,7 +72,7 @@ struct PlanningView: View {
     private func venueScanWorkspaceCard(for project: ProjectPackage) -> some View {
         let scanReadiness = store.venueScanReadinessSummary()
 
-        VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Venue Scan Workspace")
                     .font(.headline)
