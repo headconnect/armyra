@@ -44,6 +44,7 @@ public enum PlanningReadinessAnalyzer {
     public static func summarize(project: ProjectPackage) -> PlanningReadinessSummary {
         let overlaps = FieldLayoutAnalysis.overlaps(in: project.layouts)
         let closePairs = FieldLayoutAnalysis.tightSpacing(in: project.layouts, minimumGap: 4)
+        let laneIssues = FieldLayoutAnalysis.practicalLaneIssues(in: project.layouts, minimumLaneWidth: 6)
         let venueScanReadiness = VenueScanReadinessAnalyzer.summarize(venueScan: project.venueScan)
         var issues: [PlanningReadinessIssue] = []
         var score = venueScanReadiness.score
@@ -73,6 +74,24 @@ public enum PlanningReadinessAnalyzer {
                 )
             )
             score -= 0.15
+        }
+
+        if laneIssues.contains(where: { $0.laneWidthMeters < 3 }) {
+            issues.append(
+                PlanningReadinessIssue(
+                    message: "Some adjacent pitches leave almost no practical chalking lane for a trolley or setup team.",
+                    level: .needsWork
+                )
+            )
+            score -= 0.25
+        } else if laneIssues.isEmpty == false {
+            issues.append(
+                PlanningReadinessIssue(
+                    message: "Some adjacent pitches leave only a narrow chalking lane, which may slow setup and recovery.",
+                    level: .caution
+                )
+            )
+            score -= 0.12
         }
 
         if project.layouts.isEmpty {

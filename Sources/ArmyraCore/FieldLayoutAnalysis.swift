@@ -59,6 +59,30 @@ public struct LayoutSpacingIssue: Equatable, Sendable {
     }
 }
 
+public enum LayoutLaneAxis: String, Codable, Equatable, Sendable {
+    case horizontal
+    case vertical
+}
+
+public struct LayoutLaneIssue: Equatable, Sendable {
+    public var firstLayoutID: UUID
+    public var secondLayoutID: UUID
+    public var laneWidthMeters: Double
+    public var axis: LayoutLaneAxis
+
+    public init(
+        firstLayoutID: UUID,
+        secondLayoutID: UUID,
+        laneWidthMeters: Double,
+        axis: LayoutLaneAxis
+    ) {
+        self.firstLayoutID = firstLayoutID
+        self.secondLayoutID = secondLayoutID
+        self.laneWidthMeters = laneWidthMeters
+        self.axis = axis
+    }
+}
+
 public enum FieldLayoutAnalysis {
     public static func boundingBox(for layout: FieldLayout) -> FieldBoundingBox {
         let geometry = FieldGeometryBuilder.build(for: layout)
@@ -129,9 +153,68 @@ public enum FieldLayoutAnalysis {
         return issues
     }
 
+    public static func practicalLaneIssues(
+        in layouts: [FieldLayout],
+        minimumLaneWidth: Double
+    ) -> [LayoutLaneIssue] {
+        let boxes = layouts.map { ($0.id, boundingBox(for: $0)) }
+        var issues: [LayoutLaneIssue] = []
+
+        for firstIndex in boxes.indices {
+            for secondIndex in boxes.indices where secondIndex > firstIndex {
+                let first = boxes[firstIndex]
+                let second = boxes[secondIndex]
+
+                if first.1.intersects(second.1) {
+                    continue
+                }
+
+                if overlaps(on: \.minY, \.maxY, first.1, second.1) {
+                    let horizontalGap = max(0, max(second.1.minX - first.1.maxX, first.1.minX - second.1.maxX))
+                    if horizontalGap < minimumLaneWidth {
+                        issues.append(
+                            LayoutLaneIssue(
+                                firstLayoutID: first.0,
+                                secondLayoutID: second.0,
+                                laneWidthMeters: horizontalGap,
+                                axis: .horizontal
+                            )
+                        )
+                    }
+                }
+
+                if overlaps(on: \.minX, \.maxX, first.1, second.1) {
+                    let verticalGap = max(0, max(second.1.minY - first.1.maxY, first.1.minY - second.1.maxY))
+                    if verticalGap < minimumLaneWidth {
+                        issues.append(
+                            LayoutLaneIssue(
+                                firstLayoutID: first.0,
+                                secondLayoutID: second.0,
+                                laneWidthMeters: verticalGap,
+                                axis: .vertical
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        return issues
+    }
+
     private static func gapBetween(_ first: FieldBoundingBox, _ second: FieldBoundingBox) -> Double {
         let horizontalGap = max(0, max(second.minX - first.maxX, first.minX - second.maxX))
         let verticalGap = max(0, max(second.minY - first.maxY, first.minY - second.maxY))
         return hypot(horizontalGap, verticalGap)
+    }
+
+    private static func overlaps(
+        on minKeyPath: KeyPath<FieldBoundingBox, Double>,
+        _ maxKeyPath: KeyPath<FieldBoundingBox, Double>,
+        _ first: FieldBoundingBox,
+        _ second: FieldBoundingBox
+    ) -> Bool {
+        first[keyPath: minKeyPath] < second[keyPath: maxKeyPath] &&
+        first[keyPath: maxKeyPath] > second[keyPath: minKeyPath]
     }
 }

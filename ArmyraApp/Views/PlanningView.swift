@@ -483,6 +483,7 @@ struct PlanningView: View {
             .frame(height: 240)
 
             let overlaps = store.overlappingLayoutNames()
+            let laneWarnings = store.practicalLaneWarnings()
             if overlaps.isEmpty {
                 Text("No layout overlaps detected in the current top-down plan.")
                     .font(.subheadline)
@@ -493,6 +494,12 @@ struct PlanningView: View {
                         .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
+            }
+
+            ForEach(laneWarnings, id: \.self) { warning in
+                Label(warning, systemImage: "figure.walk")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
             }
         }
         .padding()
@@ -618,6 +625,12 @@ struct PlanningView: View {
 
                 ForEach(store.tightSpacingWarnings(), id: \.self) { warning in
                     Label(warning, systemImage: "ruler.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                }
+
+                ForEach(store.practicalLaneWarnings(), id: \.self) { warning in
+                    Label(warning, systemImage: "figure.walk")
                         .font(.subheadline)
                         .foregroundStyle(.orange)
                 }

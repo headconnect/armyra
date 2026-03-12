@@ -30,6 +30,8 @@ final class PlanningReadinessTests: XCTestCase {
                 venueName: "East Field",
                 landmarkNotes: ["Fence", "Clubhouse", "Light mast"],
                 recommendedRelocalizationHints: ["Use the clubhouse edge."],
+                preferredStartEdge: "Clubhouse edge",
+                preferredRecoveryEdge: "Fence edge",
                 scanCoverageScore: 0.82
             ),
             templates: [template],
@@ -49,5 +51,36 @@ final class PlanningReadinessTests: XCTestCase {
 
         XCTAssertEqual(summary.level, .caution)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("very close") }))
+    }
+
+    func testNarrowChalkingLaneCanEscalateToNeedsWork() {
+        let template = FieldTemplateLibrary.fiveAside
+        let project = ProjectPackage(
+            projectName: "Festival Setup",
+            venueScan: VenueScan(
+                venueName: "West Field",
+                landmarkNotes: ["Fence", "Clubhouse", "Light mast", "House roof", "Bench shelter"],
+                recommendedRelocalizationHints: ["Use the clubhouse edge.", "Recover toward the fence."],
+                preferredStartEdge: "Clubhouse edge",
+                preferredRecoveryEdge: "Fence edge",
+                scanCoverageScore: 0.9
+            ),
+            templates: [template],
+            layouts: [
+                template.makeLayout(
+                    named: "5A",
+                    transform: FieldTransform(translation: Vector2D(dx: 0, dy: 0))
+                ),
+                template.makeLayout(
+                    named: "5B",
+                    transform: FieldTransform(translation: Vector2D(dx: 41, dy: 0))
+                )
+            ]
+        )
+
+        let summary = PlanningReadinessAnalyzer.summarize(project: project)
+
+        XCTAssertEqual(summary.level, .needsWork)
+        XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("practical chalking lane") }))
     }
 }

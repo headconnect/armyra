@@ -38,4 +38,19 @@ final class FieldLayoutAnalysisTests: XCTestCase {
         XCTAssertEqual(overlaps.first?.firstLayoutID, first.id)
         XCTAssertEqual(overlaps.first?.secondLayoutID, second.id)
     }
+
+    func testPracticalLaneIssuesDetectNarrowSideBySideGap() {
+        let template = FieldTemplateLibrary.fiveAside
+        let first = template.makeLayout(named: "5A")
+        let second = template.makeLayout(
+            named: "5B",
+            transform: FieldTransform(translation: Vector2D(dx: 44, dy: 0))
+        )
+
+        let issues = FieldLayoutAnalysis.practicalLaneIssues(in: [first, second], minimumLaneWidth: 6)
+
+        XCTAssertEqual(issues.count, 1)
+        XCTAssertEqual(issues.first?.axis, .horizontal)
+        XCTAssertEqual(issues.first?.laneWidthMeters, 4, accuracy: 0.000_001)
+    }
 }

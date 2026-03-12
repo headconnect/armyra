@@ -471,6 +471,18 @@ final class ProjectStore: ObservableObject {
         }
     }
 
+    func practicalLaneWarnings() -> [String] {
+        guard let project = selectedProject else { return [] }
+        let nameByID = Dictionary(uniqueKeysWithValues: project.layouts.map { ($0.id, $0.name) })
+
+        return FieldLayoutAnalysis.practicalLaneIssues(in: project.layouts, minimumLaneWidth: 6).map { issue in
+            let first = nameByID[issue.firstLayoutID] ?? "Unknown"
+            let second = nameByID[issue.secondLayoutID] ?? "Unknown"
+            let direction = issue.axis == .horizontal ? "side-by-side" : "end-to-end"
+            return "\(first) and \(second) only leave a \(Int(issue.laneWidthMeters.rounded()))m \(direction) chalking lane"
+        }
+    }
+
     func planningReadinessSummary() -> PlanningReadinessSummary? {
         guard let project = selectedProject else { return nil }
         return PlanningReadinessAnalyzer.summarize(project: project)
