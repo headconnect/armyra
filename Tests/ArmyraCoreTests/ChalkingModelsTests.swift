@@ -9,7 +9,8 @@ final class ChalkingModelsTests: XCTestCase {
             completedSegments: 3,
             totalSegments: 12,
             trackingConfidence: .good,
-            recommendedHint: "Keep moving."
+            recommendedHint: "Keep moving.",
+            guideSegments: []
         )
 
         XCTAssertEqual(session.progressFraction, 0.25, accuracy: 0.000_001)
