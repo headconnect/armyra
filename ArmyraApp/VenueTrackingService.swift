@@ -9,7 +9,8 @@ protocol VenueTrackingService {
 struct MockVenueTrackingService: VenueTrackingService {
     func startSession(project: ProjectPackage, layout: FieldLayout) -> ChalkingSessionState {
         let geometry = FieldGeometryBuilder.build(for: layout)
-        let hint = project.venueScan.recommendedRelocalizationHints.first ?? "Face a known landmark edge before starting."
+        let preflight = ChalkingGuidancePlanner.makePreflight(project: project, layout: layout)
+        let hint = preflight.warning.map { "\(preflight.startHint) \($0)" } ?? preflight.startHint
 
         return ChalkingSessionState(
             layoutID: layout.id,

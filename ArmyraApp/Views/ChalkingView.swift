@@ -35,6 +35,42 @@ struct ChalkingView: View {
                             }
                         }
 
+                        if let layout = store.selectedChalkingLayout {
+                            let preflight = ChalkingGuidancePlanner.makePreflight(project: project, layout: layout)
+
+                            Section("Preflight") {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Text(layout.name)
+                                            .font(.headline)
+                                        Spacer()
+                                        Text(readinessLabel(preflight.readinessLevel))
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(readinessColor(preflight.readinessLevel))
+                                    }
+
+                                    Text(preflight.startHint)
+                                        .font(.subheadline)
+
+                                    Text(preflight.recoveryHint)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+
+                                    ForEach(preflight.checklist, id: \.self) { item in
+                                        Label(item, systemImage: "checkmark.circle")
+                                            .font(.subheadline)
+                                    }
+
+                                    if let warning = preflight.warning {
+                                        Label(warning, systemImage: "exclamationmark.triangle.fill")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.orange)
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                            }
+                        }
+
                         if let session = store.chalkingSession {
                             Section("Active Session") {
                                 VStack(alignment: .leading, spacing: 12) {
@@ -123,6 +159,28 @@ struct ChalkingView: View {
         case .warning:
             return .orange
         case .recover:
+            return .red
+        }
+    }
+
+    private func readinessLabel(_ readinessLevel: VenueReadinessLevel) -> String {
+        switch readinessLevel {
+        case .high:
+            return "High scan readiness"
+        case .moderate:
+            return "Moderate scan readiness"
+        case .low:
+            return "Low scan readiness"
+        }
+    }
+
+    private func readinessColor(_ readinessLevel: VenueReadinessLevel) -> Color {
+        switch readinessLevel {
+        case .high:
+            return .green
+        case .moderate:
+            return .orange
+        case .low:
             return .red
         }
     }

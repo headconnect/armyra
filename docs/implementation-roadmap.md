@@ -9,6 +9,7 @@
 - The planning screen now includes a top-down layout preview and basic overlap detection so placement changes can be reasoned about without AR.
 - The chalking screen now runs against a mock tracking/session model with progress and confidence states, which gives us a non-AR path to exercise the future trolley workflow.
 - The planning screen now also includes a mock venue-scan workspace so landmark capture, coverage progression, and scan locking can be exercised before real camera-based scanning exists.
+- The chalking screen now derives a venue-aware preflight from the saved scan so start hints, readiness, and recovery expectations reflect the planning work.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
