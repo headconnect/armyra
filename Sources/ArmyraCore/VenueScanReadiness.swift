@@ -296,7 +296,30 @@ public enum VenueScanReadinessAnalyzer {
     private static func roleMatches(label: String?, role: LandmarkRole, landmarks: [VenueLandmark]) -> Bool {
         guard let label, !label.isEmpty else { return false }
         return landmarks.contains {
-            $0.label.caseInsensitiveCompare(label) == .orderedSame && $0.role == role
+            $0.role == role && labelsLooselyMatch($0.label, label)
         }
+    }
+
+    private static func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {
+        let normalizedLHS = normalizeLabel(lhs)
+        let normalizedRHS = normalizeLabel(rhs)
+        return normalizedLHS == normalizedRHS
+            || normalizedLHS.contains(normalizedRHS)
+            || normalizedRHS.contains(normalizedLHS)
+    }
+
+    private static func normalizeLabel(_ label: String) -> String {
+        label
+            .lowercased()
+            .replacingOccurrences(of: "side", with: "")
+            .replacingOccurrences(of: "edge", with: "")
+            .replacingOccurrences(of: "touchline", with: "")
+            .replacingOccurrences(of: "goal line", with: "")
+            .replacingOccurrences(of: "goal-line", with: "")
+            .replacingOccurrences(of: "goal", with: "")
+            .replacingOccurrences(of: "line", with: "")
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 }

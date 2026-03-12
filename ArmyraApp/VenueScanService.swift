@@ -174,7 +174,7 @@ struct MockVenueScanService: VenueScanService {
 
         if let preferredStartEdge,
            !landmarks.contains(where: {
-               $0.label.caseInsensitiveCompare(preferredStartEdge) == .orderedSame && $0.role == .startCandidate
+               $0.role == .startCandidate && labelsLooselyMatch($0.label, preferredStartEdge)
            }) {
             return "The chosen start edge is not tagged as a start-side candidate yet. Re-tag it before locking the scan."
         }
@@ -185,7 +185,7 @@ struct MockVenueScanService: VenueScanService {
 
         if let preferredRecoveryEdge,
            !landmarks.contains(where: {
-               $0.label.caseInsensitiveCompare(preferredRecoveryEdge) == .orderedSame && $0.role == .recoveryCandidate
+               $0.role == .recoveryCandidate && labelsLooselyMatch($0.label, preferredRecoveryEdge)
            }) {
             return "The chosen recovery edge is not tagged as a recovery-side candidate yet. Re-tag it before locking the scan."
         }
@@ -227,5 +227,28 @@ struct MockVenueScanService: VenueScanService {
         }
 
         return "the \(normalized) side"
+    }
+
+    private func labelsLooselyMatch(_ lhs: String, _ rhs: String) -> Bool {
+        let normalizedLHS = normalizeLabel(lhs)
+        let normalizedRHS = normalizeLabel(rhs)
+        return normalizedLHS == normalizedRHS
+            || normalizedLHS.contains(normalizedRHS)
+            || normalizedRHS.contains(normalizedLHS)
+    }
+
+    private func normalizeLabel(_ label: String) -> String {
+        label
+            .lowercased()
+            .replacingOccurrences(of: "side", with: "")
+            .replacingOccurrences(of: "edge", with: "")
+            .replacingOccurrences(of: "touchline", with: "")
+            .replacingOccurrences(of: "goal line", with: "")
+            .replacingOccurrences(of: "goal-line", with: "")
+            .replacingOccurrences(of: "goal", with: "")
+            .replacingOccurrences(of: "line", with: "")
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 }
