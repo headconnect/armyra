@@ -43,7 +43,7 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
 public enum VenueScanReadinessAnalyzer {
     public static func summarize(session: VenueScanSessionState) -> VenueScanReadinessSummary {
         let derivedHintCount = session.coveredSides >= 3 && session.capturedLandmarks.count >= 4 ? 2 : 1
-        summarize(
+        return summarize(
             landmarkCount: session.capturedLandmarks.count,
             coveredSides: session.coveredSides,
             readinessScore: session.readinessScore,
