@@ -98,7 +98,7 @@ private enum ScreenshotScenario: CaseIterable {
         case .chalking:
             return app.navigationBars["Chalking"]
         case .chalkingActive:
-            return app.staticTexts["Active Session"]
+            return app.buttons["Refresh Live Status"]
         }
     }
 }
