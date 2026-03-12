@@ -17,6 +17,7 @@
 - The chalking session now reconciles itself against relocalization state, so tracking confidence and progress can react to live AR status instead of depending only on manual simulation controls.
 - Planning and chalking now keep a short diagnostics history, which should make on-device relocalization regressions and recoveries easier to spot during field testing.
 - The chalking session now carries named guide segments, which lets the UI show the current chalk segment and the next few segments instead of only aggregate progress.
+- Planning now produces a handoff-oriented readiness summary, and both planning and chalking can render a shared chalk-path preview with the active line highlighted in context.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.

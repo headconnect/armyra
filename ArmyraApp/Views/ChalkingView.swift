@@ -112,6 +112,13 @@ struct ChalkingView: View {
                                     ProgressView(value: session.progressFraction)
                                         .tint(confidenceColor(session.trackingConfidence))
 
+                                    ChalkPathPreviewView(
+                                        guideSegments: session.guideSegments,
+                                        activeSegmentID: session.currentSegment?.id,
+                                        completedSegmentIDs: Set(session.guideSegments.prefix(session.completedSegments).map(\.id))
+                                    )
+                                    .frame(height: 220)
+
                                     if let currentSegment = session.currentSegment {
                                         VStack(alignment: .leading, spacing: 6) {
                                             Text("Current Segment")

@@ -16,6 +16,7 @@ final class FieldGeometryBuilderTests: XCTestCase {
         XCTAssertEqual(geometry.boundary.count, 4)
         XCTAssertEqual(geometry.interiorLines.count, 13)
         XCTAssertEqual(geometry.circles.count, 4)
+        XCTAssertEqual(geometry.guidePath.count, geometry.guideSegments.count)
     }
 
     func testRotationAndTranslationAreApplied() throws {

@@ -2,9 +2,9 @@
 
 ## Branch and CI
 - Active branch: `codex/ios-foundation`
-- Latest completed work is committed through `d145c30` (`Fix tracking asset persistence types`).
+- Latest completed work is committed through `46e6435` (`Add AR diagnostics history`).
 - GitHub Actions is green on the latest run:
-  - `23000040031` for commit `d145c30`
+  - `23002065572` for commit `46e6435`
   - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, and uploads the built app artifact.
 
 ## What exists now
@@ -33,6 +33,8 @@
   - Run a mock venue-scan workflow
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
+  - See a handoff-oriented readiness summary for parent-safe chalking
+  - Preview the chalk path sequence for the selected layout
 - `Chalking` tab:
   - Select a layout for chalking
   - Start a mock chalking session
@@ -40,6 +42,8 @@
   - Cycle tracking confidence between `good`, `warning`, and `recover`
   - End session
   - Inspect venue-aware preflight and AR diagnostics before device testing
+  - See recent AR diagnostics history
+  - See named current/upcoming chalk segments instead of only aggregate progress
 
 ## Important files
 - Product plan: `docs/ios-ar-football-pitch-plan.md`

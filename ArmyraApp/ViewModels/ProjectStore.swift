@@ -425,6 +425,27 @@ final class ProjectStore: ObservableObject {
         }
     }
 
+    func tightSpacingWarnings() -> [String] {
+        guard let project = selectedProject else { return [] }
+        let nameByID = Dictionary(uniqueKeysWithValues: project.layouts.map { ($0.id, $0.name) })
+
+        return FieldLayoutAnalysis.tightSpacing(in: project.layouts, minimumGap: 4).map { issue in
+            let first = nameByID[issue.firstLayoutID] ?? "Unknown"
+            let second = nameByID[issue.secondLayoutID] ?? "Unknown"
+            return "\(first) is only \(Int(issue.gapMeters.rounded()))m from \(second)"
+        }
+    }
+
+    func planningReadinessSummary() -> PlanningReadinessSummary? {
+        guard let project = selectedProject else { return nil }
+        return PlanningReadinessAnalyzer.summarize(project: project)
+    }
+
+    func selectedLayoutGuideSegments() -> [GuideSegment] {
+        guard let selectedLayout else { return [] }
+        return FieldGeometryBuilder.build(for: selectedLayout).guideSegments
+    }
+
     func venueCoverageDescription() -> String {
         let score = venueScanSession?.readinessScore ?? selectedProject?.venueScan.scanCoverageScore ?? 0
         let percentage = Int((score * 100).rounded())

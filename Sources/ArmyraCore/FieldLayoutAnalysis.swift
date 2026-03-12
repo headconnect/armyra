@@ -47,6 +47,18 @@ public struct LayoutOverlap: Equatable, Sendable {
     }
 }
 
+public struct LayoutSpacingIssue: Equatable, Sendable {
+    public var firstLayoutID: UUID
+    public var secondLayoutID: UUID
+    public var gapMeters: Double
+
+    public init(firstLayoutID: UUID, secondLayoutID: UUID, gapMeters: Double) {
+        self.firstLayoutID = firstLayoutID
+        self.secondLayoutID = secondLayoutID
+        self.gapMeters = gapMeters
+    }
+}
+
 public enum FieldLayoutAnalysis {
     public static func boundingBox(for layout: FieldLayout) -> FieldBoundingBox {
         let geometry = FieldGeometryBuilder.build(for: layout)
@@ -86,5 +98,40 @@ public enum FieldLayoutAnalysis {
         }
 
         return overlaps
+    }
+
+    public static func tightSpacing(in layouts: [FieldLayout], minimumGap: Double) -> [LayoutSpacingIssue] {
+        let boxes = layouts.map { ($0.id, boundingBox(for: $0)) }
+        var issues: [LayoutSpacingIssue] = []
+
+        for firstIndex in boxes.indices {
+            for secondIndex in boxes.indices where secondIndex > firstIndex {
+                let first = boxes[firstIndex]
+                let second = boxes[secondIndex]
+
+                if first.1.intersects(second.1) {
+                    continue
+                }
+
+                let gap = gapBetween(first.1, second.1)
+                if gap < minimumGap {
+                    issues.append(
+                        LayoutSpacingIssue(
+                            firstLayoutID: first.0,
+                            secondLayoutID: second.0,
+                            gapMeters: gap
+                        )
+                    )
+                }
+            }
+        }
+
+        return issues
+    }
+
+    private static func gapBetween(_ first: FieldBoundingBox, _ second: FieldBoundingBox) -> Double {
+        let horizontalGap = max(0, max(second.minX - first.maxX, first.minX - second.maxX))
+        let verticalGap = max(0, max(second.minY - first.maxY, first.minY - second.maxY))
+        return hypot(horizontalGap, verticalGap)
     }
 }

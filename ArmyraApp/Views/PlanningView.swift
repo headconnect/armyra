@@ -11,6 +11,7 @@ struct PlanningView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             summaryCard(for: project)
+                            readinessCard
                             venueScanWorkspaceCard(for: project)
                             planningPreviewCard(for: project)
                             templatePickerCard
@@ -202,6 +203,8 @@ struct PlanningView: View {
                 .font(.headline)
 
             if let layout = store.selectedLayout {
+                let guideSegments = store.selectedLayoutGuideSegments()
+
                 TextField(
                     "Layout name",
                     text: Binding(
@@ -317,6 +320,25 @@ struct PlanningView: View {
                                 set: { store.setSelectedLayoutMarking(marking, isEnabled: $0) }
                             )
                         )
+                    }
+                }
+
+                if guideSegments.isEmpty == false {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Chalk Path Preview")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        ChalkPathPreviewView(
+                            guideSegments: guideSegments,
+                            activeSegmentID: guideSegments.first?.id,
+                            completedSegmentIDs: []
+                        )
+                        .frame(height: 180)
+
+                        Text(guideSegments.prefix(4).map(\.label).joined(separator: " -> "))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             } else {
@@ -448,6 +470,47 @@ struct PlanningView: View {
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
+    private var readinessCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Chalking Readiness")
+                .font(.headline)
+
+            if let readiness = store.planningReadinessSummary() {
+                HStack {
+                    Text(readiness.summary)
+                        .font(.subheadline)
+                    Spacer()
+                    Text(readinessLabel(readiness))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(readinessColor(readiness.level))
+                }
+
+                Text("Parent-safe handoff: \(readiness.parentSafe ? "yes" : "not yet")")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Text("Readiness score: \(Int((readiness.score * 100).rounded()))%")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                ForEach(readiness.issues) { issue in
+                    Label(issue.message, systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(issue.level == .needsWork ? .red : .orange)
+                }
+
+                ForEach(store.tightSpacingWarnings(), id: \.self) { warning in
+                    Label(warning, systemImage: "ruler.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
     private func lockModeText(_ lockMode: PlacementLockMode) -> String {
         switch lockMode {
         case .center:
@@ -463,6 +526,28 @@ struct PlanningView: View {
         }
 
         return AnyShapeStyle(.thinMaterial)
+    }
+
+    private func readinessLabel(_ readiness: PlanningReadinessSummary) -> String {
+        switch readiness.level {
+        case .ready:
+            return "Ready"
+        case .caution:
+            return "Caution"
+        case .needsWork:
+            return "Needs work"
+        }
+    }
+
+    private func readinessColor(_ level: PlanningReadinessLevel) -> Color {
+        switch level {
+        case .ready:
+            return .green
+        case .caution:
+            return .orange
+        case .needsWork:
+            return .red
+        }
     }
 
     @ViewBuilder
