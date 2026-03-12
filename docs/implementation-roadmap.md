@@ -15,6 +15,7 @@
 - Local tracking assets now have a file-backed store and the `ARKit` coordinator starts planning/chalking sessions with `ARWorldTrackingConfiguration`, preparing the path toward real relocalization.
 - Planning and chalking now surface AR diagnostics in the UI so device testing can verify session mode, saved asset presence, payload size, and last AR error without attaching a debugger.
 - The chalking session now reconciles itself against relocalization state, so tracking confidence and progress can react to live AR status instead of depending only on manual simulation controls.
+- Planning and chalking now keep a short diagnostics history, which should make on-device relocalization regressions and recoveries easier to spot during field testing.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.

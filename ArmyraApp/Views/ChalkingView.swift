@@ -74,6 +74,10 @@ struct ChalkingView: View {
                                         diagnosticsView(diagnostics)
                                     }
 
+                                    if !store.chalkingDiagnosticsHistory.isEmpty {
+                                        diagnosticsHistoryView(store.chalkingDiagnosticsHistory)
+                                    }
+
                                     ForEach(preflight.checklist, id: \.self) { item in
                                         Label(item, systemImage: "checkmark.circle")
                                             .font(.subheadline)
@@ -231,5 +235,26 @@ struct ChalkingView: View {
                     .foregroundStyle(.orange)
             }
         }
+    }
+
+    @ViewBuilder
+    private func diagnosticsHistoryView(_ events: [ARDiagnosticsEvent]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Recent events")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(events.reversed()) { event in
+                Text(historyLine(for: event))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func historyLine(for event: ARDiagnosticsEvent) -> String {
+        let time = event.timestamp.formatted(date: .omitted, time: .shortened)
+        let readiness = Int((event.diagnostics.readinessScore * 100).rounded())
+        return "\(time) - \(event.kind.rawValue) - \(event.diagnostics.relocalizationState.rawValue) - \(readiness)%"
     }
 }

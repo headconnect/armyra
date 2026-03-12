@@ -108,6 +108,13 @@ struct PlanningView: View {
                 )
             }
 
+            if !store.planningDiagnosticsHistory.isEmpty {
+                diagnosticsHistoryCard(
+                    title: "Recent Events",
+                    events: store.planningDiagnosticsHistory
+                )
+            }
+
             if store.isPersistingVenueTrackingAsset {
                 Label("Saving local relocalization asset...", systemImage: "arrow.triangle.2.circlepath")
                     .font(.caption)
@@ -481,5 +488,27 @@ struct PlanningView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+    @ViewBuilder
+    private func diagnosticsHistoryCard(title: String, events: [ARDiagnosticsEvent]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(events.reversed()) { event in
+                Text(historyLine(for: event))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private func historyLine(for event: ARDiagnosticsEvent) -> String {
+        let time = event.timestamp.formatted(date: .omitted, time: .shortened)
+        let readiness = Int((event.diagnostics.readinessScore * 100).rounded())
+        return "\(time) - \(event.kind.rawValue) - \(event.diagnostics.relocalizationState.rawValue) - \(readiness)%"
     }
 }

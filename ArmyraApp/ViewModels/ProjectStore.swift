@@ -16,6 +16,8 @@ final class ProjectStore: ObservableObject {
     @Published var planningTrackingSnapshot: VenueTrackingSnapshot?
     @Published var chalkingTrackingSnapshot: VenueTrackingSnapshot?
     @Published var isPersistingVenueTrackingAsset = false
+    @Published var planningDiagnosticsHistory: [ARDiagnosticsEvent] = []
+    @Published var chalkingDiagnosticsHistory: [ARDiagnosticsEvent] = []
 
     private let venueTrackingService: VenueTrackingService
     private let venueScanService: VenueScanService
@@ -77,6 +79,8 @@ final class ProjectStore: ObservableObject {
         venueScanSession = nil
         chalkingTrackingSnapshot = nil
         planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
+        planningDiagnosticsHistory = []
+        chalkingDiagnosticsHistory = []
         arSessionCoordinator.stopSession()
     }
 
@@ -247,6 +251,7 @@ final class ProjectStore: ObservableObject {
         arSessionCoordinator.startPlanningSession(for: project.venueScan)
         venueScanSession = venueScanService.startSession(for: project.venueScan)
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: project.venueScan)
+        recordPlanningDiagnostics(.started)
     }
 
     func captureVenueLandmark(_ landmark: String) {
@@ -256,6 +261,7 @@ final class ProjectStore: ObservableObject {
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
             for: venueScanDraft(session: updatedSession, original: project.venueScan)
         )
+        recordPlanningDiagnostics(.refreshed)
     }
 
     func advanceVenueCoverage() {
@@ -265,6 +271,7 @@ final class ProjectStore: ObservableObject {
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
             for: venueScanDraft(session: updatedSession, original: project.venueScan)
         )
+        recordPlanningDiagnostics(.refreshed)
     }
 
     func finalizeVenueScanSession() {
@@ -284,6 +291,7 @@ final class ProjectStore: ObservableObject {
             let (asset, payload) = await arSessionCoordinator.capturePlanningAsset(for: finalizedScan)
             venueTrackingAssetStore.save(asset, payload: payload)
             isPersistingVenueTrackingAsset = false
+            recordPlanningDiagnostics(.assetSaved)
             arSessionCoordinator.stopSession()
         }
     }
@@ -291,6 +299,7 @@ final class ProjectStore: ObservableObject {
     func discardVenueScanSession() {
         venueScanSession = nil
         planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
+        recordPlanningDiagnostics(.stopped)
         arSessionCoordinator.stopSession()
     }
 
@@ -318,6 +327,7 @@ final class ProjectStore: ObservableObject {
                 trackingSnapshot: snapshot
             )
         }
+        recordChalkingDiagnostics(.started)
     }
 
     func advanceChalkingSession() {
@@ -338,6 +348,7 @@ final class ProjectStore: ObservableObject {
             trackingSnapshot: snapshot
         )
         chalkingTrackingSnapshot = snapshot
+        recordChalkingDiagnostics(.refreshed)
     }
 
     func cycleTrackingConfidence() {
@@ -358,6 +369,7 @@ final class ProjectStore: ObservableObject {
             trackingSnapshot: snapshot
         )
         chalkingTrackingSnapshot = snapshot
+        recordChalkingDiagnostics(.driftSimulated)
     }
 
     func refreshChalkingTracking() {
@@ -377,11 +389,13 @@ final class ProjectStore: ObservableObject {
             layout: layout,
             trackingSnapshot: snapshot
         )
+        recordChalkingDiagnostics(.refreshed)
     }
 
     func endChalkingSession() {
         chalkingSession = nil
         chalkingTrackingSnapshot = nil
+        recordChalkingDiagnostics(.stopped)
         arSessionCoordinator.stopSession()
     }
 
@@ -473,6 +487,29 @@ final class ProjectStore: ObservableObject {
             "Car park entrance",
             "Bench shelter"
         ]
+    }
+
+    private func recordPlanningDiagnostics(_ kind: ARDiagnosticsEventKind) {
+        guard let diagnostics = planningDiagnostics() else { return }
+        appendDiagnosticsEvent(
+            ARDiagnosticsEvent(kind: kind, diagnostics: diagnostics),
+            to: &planningDiagnosticsHistory
+        )
+    }
+
+    private func recordChalkingDiagnostics(_ kind: ARDiagnosticsEventKind) {
+        guard let diagnostics = chalkingDiagnostics() else { return }
+        appendDiagnosticsEvent(
+            ARDiagnosticsEvent(kind: kind, diagnostics: diagnostics),
+            to: &chalkingDiagnosticsHistory
+        )
+    }
+
+    private func appendDiagnosticsEvent(_ event: ARDiagnosticsEvent, to history: inout [ARDiagnosticsEvent]) {
+        history.append(event)
+        if history.count > 12 {
+            history.removeFirst(history.count - 12)
+        }
     }
 
     private var selectedProjectIndex: Int? {

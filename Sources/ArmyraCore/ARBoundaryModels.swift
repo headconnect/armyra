@@ -81,3 +81,31 @@ public struct ARSessionDiagnostics: Equatable, Sendable {
         self.lastErrorDescription = lastErrorDescription
     }
 }
+
+public enum ARDiagnosticsEventKind: String, Codable, CaseIterable, Sendable {
+    case started
+    case refreshed
+    case assetSaved
+    case driftSimulated
+    case stopped
+    case error
+}
+
+public struct ARDiagnosticsEvent: Equatable, Identifiable, Sendable {
+    public var id: UUID
+    public var timestamp: Date
+    public var kind: ARDiagnosticsEventKind
+    public var diagnostics: ARSessionDiagnostics
+
+    public init(
+        id: UUID = UUID(),
+        timestamp: Date = Date(),
+        kind: ARDiagnosticsEventKind,
+        diagnostics: ARSessionDiagnostics
+    ) {
+        self.id = id
+        self.timestamp = timestamp
+        self.kind = kind
+        self.diagnostics = diagnostics
+    }
+}
