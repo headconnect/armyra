@@ -1,4 +1,5 @@
 import SwiftUI
+import ArmyraCore
 
 struct RootView: View {
     @ObservedObject var store: ProjectStore
