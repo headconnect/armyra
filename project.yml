@@ -1,0 +1,35 @@
+name: Armyra
+options:
+  deploymentTarget:
+    iOS: '17.0'
+packages:
+  ArmyraCore:
+    path: .
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+targets:
+  ArmyraApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: ArmyraApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.headconnect.armyra
+        PRODUCT_NAME: Armyra
+        TARGETED_DEVICE_FAMILY: '1,2'
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Armyra
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ''
+    dependencies:
+      - package: ArmyraCore
+        product: ArmyraCore
+schemes:
+  ArmyraApp:
+    build:
+      targets:
+        ArmyraApp: all
