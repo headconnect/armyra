@@ -2,6 +2,10 @@ import Foundation
 import ArmyraCore
 
 protocol ARSessionCoordinator {
+    func startPlanningSession(for venueScan: VenueScan)
+    func startChalkingSession(for venueScan: VenueScan, assetData: Data?)
+    func capturePlanningAsset(for venueScan: VenueScan) async -> (VenueTrackingAssetRecord, Data?)
+    func stopSession()
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot
     func recordPlanningAsset(for venueScan: VenueScan) -> VenueTrackingAssetRecord
     func chalkingSnapshot(
@@ -22,6 +26,16 @@ enum DefaultARSessionCoordinatorFactory {
 }
 
 struct MockARSessionCoordinator: ARSessionCoordinator {
+    func startPlanningSession(for venueScan: VenueScan) {}
+
+    func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {}
+
+    func capturePlanningAsset(for venueScan: VenueScan) async -> (VenueTrackingAssetRecord, Data?) {
+        (recordPlanningAsset(for: venueScan), nil)
+    }
+
+    func stopSession() {}
+
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot {
         VenueTrackingSnapshot(
             venueScanID: venueScan.id,

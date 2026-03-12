@@ -15,6 +15,7 @@ final class ProjectStore: ObservableObject {
     @Published var venueScanSession: VenueScanSessionState?
     @Published var planningTrackingSnapshot: VenueTrackingSnapshot?
     @Published var chalkingTrackingSnapshot: VenueTrackingSnapshot?
+    @Published var isPersistingVenueTrackingAsset = false
 
     private let venueTrackingService: VenueTrackingService
     private let venueScanService: VenueScanService
@@ -32,7 +33,7 @@ final class ProjectStore: ObservableObject {
         venueTrackingService: VenueTrackingService = MockVenueTrackingService(),
         venueScanService: VenueScanService = MockVenueScanService(),
         arSessionCoordinator: ARSessionCoordinator = DefaultARSessionCoordinatorFactory.make(),
-        venueTrackingAssetStore: VenueTrackingAssetStore = InMemoryVenueTrackingAssetStore()
+        venueTrackingAssetStore: VenueTrackingAssetStore = DefaultVenueTrackingAssetStoreFactory.make()
     ) {
         self.projects = projects
         self.venueTrackingService = venueTrackingService
@@ -76,6 +77,7 @@ final class ProjectStore: ObservableObject {
         venueScanSession = nil
         chalkingTrackingSnapshot = nil
         planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
+        arSessionCoordinator.stopSession()
     }
 
     func selectLayout(_ layoutID: UUID) {
@@ -242,6 +244,7 @@ final class ProjectStore: ObservableObject {
 
     func startVenueScanSession() {
         guard let project = selectedProject else { return }
+        arSessionCoordinator.startPlanningSession(for: project.venueScan)
         venueScanSession = venueScanService.startSession(for: project.venueScan)
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: project.venueScan)
     }
@@ -274,13 +277,21 @@ final class ProjectStore: ObservableObject {
         )
         projects[projectIndex].venueScan = finalizedScan
         planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: finalizedScan)
-        venueTrackingAssetStore.save(arSessionCoordinator.recordPlanningAsset(for: finalizedScan))
         self.venueScanSession = nil
+        isPersistingVenueTrackingAsset = true
+
+        Task { @MainActor in
+            let (asset, payload) = await arSessionCoordinator.capturePlanningAsset(for: finalizedScan)
+            venueTrackingAssetStore.save(asset, payload: payload)
+            isPersistingVenueTrackingAsset = false
+            arSessionCoordinator.stopSession()
+        }
     }
 
     func discardVenueScanSession() {
         venueScanSession = nil
         planningTrackingSnapshot = selectedProject.map { arSessionCoordinator.planningSnapshot(for: $0.venueScan) }
+        arSessionCoordinator.stopSession()
     }
 
     func selectChalkingLayout(_ layoutID: UUID) {
@@ -289,6 +300,9 @@ final class ProjectStore: ObservableObject {
 
     func startChalkingSession() {
         guard let project = selectedProject, let layout = selectedChalkingLayout else { return }
+        let asset = latestVenueTrackingAsset()
+        let payload = asset.flatMap { venueTrackingAssetStore.payload(for: $0) }
+        arSessionCoordinator.startChalkingSession(for: project.venueScan, assetData: payload)
         chalkingSession = venueTrackingService.startSession(project: project, layout: layout)
         chalkingTrackingSnapshot = arSessionCoordinator.chalkingSnapshot(
             project: project,
@@ -328,6 +342,7 @@ final class ProjectStore: ObservableObject {
     func endChalkingSession() {
         chalkingSession = nil
         chalkingTrackingSnapshot = nil
+        arSessionCoordinator.stopSession()
     }
 
     func selectedLayoutRotationDegrees() -> Double {

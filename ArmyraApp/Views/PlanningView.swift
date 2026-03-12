@@ -101,6 +101,12 @@ struct PlanningView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if store.isPersistingVenueTrackingAsset {
+                Label("Saving local relocalization asset...", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             if let session = store.venueScanSession {
                 Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
                     .font(.subheadline)

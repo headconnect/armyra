@@ -12,6 +12,45 @@ final class ARKitSessionCoordinator: NSObject, ARSessionCoordinator, ARSessionDe
         session.delegate = self
     }
 
+    func startPlanningSession(for venueScan: VenueScan) {
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = [.horizontal]
+        configuration.worldAlignment = .gravity
+        session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+    }
+
+    func startChalkingSession(for venueScan: VenueScan, assetData: Data?) {
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.worldAlignment = .gravity
+
+        if let assetData,
+           let worldMap = try? NSKeyedUnarchiver.unarchivedObject(ofClass: ARWorldMap.self, from: assetData) {
+            configuration.initialWorldMap = worldMap
+        }
+
+        session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+    }
+
+    func capturePlanningAsset(for venueScan: VenueScan) async -> (VenueTrackingAssetRecord, Data?) {
+        await withCheckedContinuation { continuation in
+            session.getCurrentWorldMap { worldMap, _ in
+                let record = self.recordPlanningAsset(for: venueScan)
+
+                guard let worldMap,
+                      let data = try? NSKeyedArchiver.archivedData(withRootObject: worldMap, requiringSecureCoding: true) else {
+                    continuation.resume(returning: (record, nil))
+                    return
+                }
+
+                continuation.resume(returning: (record, data))
+            }
+        }
+    }
+
+    func stopSession() {
+        session.pause()
+    }
+
     func planningSnapshot(for venueScan: VenueScan) -> VenueTrackingSnapshot {
         let fallbackSnapshot = fallback.planningSnapshot(for: venueScan)
         guard let frame = session.currentFrame else {
