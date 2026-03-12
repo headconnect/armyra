@@ -1,8 +1,8 @@
-import Testing
+import XCTest
 @testable import ArmyraCore
 
-struct FieldLayoutValidatorTests {
-    @Test func invalidDimensionsAreRejected() {
+final class FieldLayoutValidatorTests: XCTestCase {
+    func testInvalidDimensionsAreRejected() {
         let template = FieldTemplateLibrary.sevenAside
         let layout = FieldLayout(
             name: "7A",
@@ -11,12 +11,12 @@ struct FieldLayoutValidatorTests {
             enabledMarkings: []
         )
 
-        #expect(throws: FieldValidationError.negativeOrZeroDimension) {
-            try FieldLayoutValidator.validate(layout: layout, template: template)
+        XCTAssertThrowsError(try FieldLayoutValidator.validate(layout: layout, template: template)) { error in
+            XCTAssertEqual(error as? FieldValidationError, .negativeOrZeroDimension)
         }
     }
 
-    @Test func unsupportedMarkingsAreRejected() {
+    func testUnsupportedMarkingsAreRejected() {
         let template = FieldTemplate(
             name: "Minimal",
             pitchSize: .fiveAside,
@@ -31,8 +31,8 @@ struct FieldLayoutValidatorTests {
             enabledMarkings: [.goalArea]
         )
 
-        #expect(throws: FieldValidationError.unsupportedMarking(.goalArea)) {
-            try FieldLayoutValidator.validate(layout: layout, template: template)
+        XCTAssertThrowsError(try FieldLayoutValidator.validate(layout: layout, template: template)) { error in
+            XCTAssertEqual(error as? FieldValidationError, .unsupportedMarking(.goalArea))
         }
     }
 }

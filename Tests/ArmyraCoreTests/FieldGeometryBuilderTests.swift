@@ -1,8 +1,8 @@
-import Testing
+import XCTest
 @testable import ArmyraCore
 
-struct FieldGeometryBuilderTests {
-    @Test func fiveAsideGeneratesBoundaryAndInteriorMarkings() {
+final class FieldGeometryBuilderTests: XCTestCase {
+    func testFiveAsideGeneratesBoundaryAndInteriorMarkings() {
         let template = FieldTemplateLibrary.fiveAside
         let layout = FieldLayout(
             name: "5A",
@@ -13,12 +13,12 @@ struct FieldGeometryBuilderTests {
 
         let geometry = FieldGeometryBuilder.build(for: layout)
 
-        #expect(geometry.boundary.count == 4)
-        #expect(geometry.interiorLines.count == 13)
-        #expect(geometry.circles.count == 4)
+        XCTAssertEqual(geometry.boundary.count, 4)
+        XCTAssertEqual(geometry.interiorLines.count, 13)
+        XCTAssertEqual(geometry.circles.count, 4)
     }
 
-    @Test func rotationAndTranslationAreApplied() {
+    func testRotationAndTranslationAreApplied() {
         let template = FieldTemplateLibrary.fiveAside
         let layout = FieldLayout(
             name: "5A",
@@ -33,6 +33,6 @@ struct FieldGeometryBuilderTests {
 
         let geometry = FieldGeometryBuilder.build(for: layout)
 
-        #expect(geometry.boundary.first?.start == Point2D(x: -5, y: -15))
+        XCTAssertEqual(geometry.boundary.first?.start, Point2D(x: -5, y: -15))
     }
 }

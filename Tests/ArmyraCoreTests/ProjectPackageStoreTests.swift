@@ -1,9 +1,9 @@
 import Foundation
-import Testing
+import XCTest
 @testable import ArmyraCore
 
-struct ProjectPackageStoreTests {
-    @Test func packageRoundTripPreservesLayouts() throws {
+final class ProjectPackageStoreTests: XCTestCase {
+    func testPackageRoundTripPreservesLayouts() throws {
         let template = FieldTemplateLibrary.nineAside
         let package = ProjectPackage(
             projectName: "Training Ground",
@@ -20,15 +20,15 @@ struct ProjectPackageStoreTests {
                     templateID: template.id,
                     dimensions: template.dimensions,
                     enabledMarkings: template.defaultMarkings
-                ),
+                )
             ]
         )
 
         let data = try ProjectPackageStore.encode(package)
         let decoded = try ProjectPackageStore.decode(data)
 
-        #expect(decoded.projectName == package.projectName)
-        #expect(decoded.layouts == package.layouts)
-        #expect(decoded.venueScan.venueName == package.venueScan.venueName)
+        XCTAssertEqual(decoded.projectName, package.projectName)
+        XCTAssertEqual(decoded.layouts, package.layouts)
+        XCTAssertEqual(decoded.venueScan.venueName, package.venueScan.venueName)
     }
 }
