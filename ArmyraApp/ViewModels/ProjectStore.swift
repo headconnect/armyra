@@ -12,8 +12,10 @@ final class ProjectStore: ObservableObject {
     @Published var exportDocument: ProjectPackageDocument?
     @Published var importErrorMessage: String?
     @Published var chalkingSession: ChalkingSessionState?
+    @Published var venueScanSession: VenueScanSessionState?
 
     private let venueTrackingService: VenueTrackingService
+    private let venueScanService: VenueScanService
 
     struct ExportPreview: Identifiable {
         let id = UUID()
@@ -23,10 +25,12 @@ final class ProjectStore: ObservableObject {
 
     init(
         projects: [ProjectPackage],
-        venueTrackingService: VenueTrackingService = MockVenueTrackingService()
+        venueTrackingService: VenueTrackingService = MockVenueTrackingService(),
+        venueScanService: VenueScanService = MockVenueScanService()
     ) {
         self.projects = projects
         self.venueTrackingService = venueTrackingService
+        self.venueScanService = venueScanService
         self.selectedProjectID = projects.first?.id
         self.selectedTemplateID = projects.first?.templates.first?.id
         self.selectedLayoutID = projects.first?.layouts.first?.id
@@ -58,6 +62,7 @@ final class ProjectStore: ObservableObject {
         selectedLayoutID = selectedProject?.layouts.first?.id
         selectedChalkingLayoutID = selectedProject?.layouts.first?.id
         chalkingSession = nil
+        venueScanSession = nil
     }
 
     func selectLayout(_ layoutID: UUID) {
@@ -222,6 +227,36 @@ final class ProjectStore: ObservableObject {
         importErrorMessage = error.localizedDescription
     }
 
+    func startVenueScanSession() {
+        guard let project = selectedProject else { return }
+        venueScanSession = venueScanService.startSession(for: project.venueScan)
+    }
+
+    func captureVenueLandmark(_ landmark: String) {
+        guard let venueScanSession else { return }
+        self.venueScanSession = venueScanService.captureLandmark(landmark, session: venueScanSession)
+    }
+
+    func advanceVenueCoverage() {
+        guard let venueScanSession else { return }
+        self.venueScanSession = venueScanService.advanceCoverage(session: venueScanSession)
+    }
+
+    func finalizeVenueScanSession() {
+        guard let projectIndex = selectedProjectIndex,
+              let venueScanSession else { return }
+
+        projects[projectIndex].venueScan = venueScanService.finalize(
+            session: venueScanSession,
+            original: projects[projectIndex].venueScan
+        )
+        self.venueScanSession = nil
+    }
+
+    func discardVenueScanSession() {
+        venueScanSession = nil
+    }
+
     func selectChalkingLayout(_ layoutID: UUID) {
         selectedChalkingLayoutID = layoutID
     }
@@ -275,6 +310,23 @@ final class ProjectStore: ObservableObject {
             let second = nameByID[overlap.secondLayoutID] ?? "Unknown"
             return "\(first) overlaps \(second)"
         }
+    }
+
+    func venueCoverageDescription() -> String {
+        let score = venueScanSession?.readinessScore ?? selectedProject?.venueScan.scanCoverageScore ?? 0
+        let percentage = Int((score * 100).rounded())
+        return "\(percentage)% ready"
+    }
+
+    func availableMockLandmarks() -> [String] {
+        [
+            "Fence line",
+            "Clubhouse",
+            "Floodlight mast",
+            "House roof",
+            "Car park entrance",
+            "Bench shelter"
+        ]
     }
 
     private var selectedProjectIndex: Int? {

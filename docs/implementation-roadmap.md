@@ -8,14 +8,15 @@
 - The app now has basic `*.armyrafield` import/export plumbing and project duplication support, which moves it closer to real device testing once Apple signing is configured.
 - The planning screen now includes a top-down layout preview and basic overlap detection so placement changes can be reasoned about without AR.
 - The chalking screen now runs against a mock tracking/session model with progress and confidence states, which gives us a non-AR path to exercise the future trolley workflow.
+- The planning screen now also includes a mock venue-scan workspace so landmark capture, coverage progression, and scan locking can be exercised before real camera-based scanning exists.
 
 ## Active milestone: Pre-AR workflow foundation
 The current development focus is to make planning and chalking flows realistic before wiring in real `ARKit` services.
 
 ### In progress now
-- Add a clearer venue-level workspace summary that shows overlap and fit considerations.
+- Add a clearer venue-level workspace that connects planning edits, venue scanning, and future relocalization.
 - Prepare the app shell for signed iPhone deployment by keeping import/export and planning flows independent of simulator-only behavior.
-- Introduce mockable tracking and relocalization services so the chalking workflow can be exercised without camera-based AR.
+- Introduce mockable scanning, tracking, and relocalization services so the workflow can be exercised without camera-based AR.
 
 ### Next after this slice
 - Add AR-facing abstractions for venue scanning, relocalization confidence, and chalking guidance state.
@@ -40,7 +41,7 @@ The current development focus is to make planning and chalking flows realistic b
 - Introduce a venue scan service abstraction that can later wrap `ARKit`/`ARWorldMap`.
 - Model tracking confidence and relocalization hints in a way the chalking UI can react to.
 - Keep AR-specific persistence isolated from app-domain package models.
-- Swap the mock chalking/tracking service for a real implementation once landmark scanning and relocalization are ready.
+- Swap the mock scan and chalking services for real implementations once landmark scanning and relocalization are ready.
 
 ## Working assumptions
 - The app remains iPhone-first and offline-first.

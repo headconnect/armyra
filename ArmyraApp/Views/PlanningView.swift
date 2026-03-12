@@ -11,6 +11,7 @@ struct PlanningView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             summaryCard(for: project)
+                            venueScanWorkspaceCard(for: project)
                             planningPreviewCard(for: project)
                             templatePickerCard
                             selectedLayoutInspector
@@ -65,6 +66,95 @@ struct PlanningView: View {
             }
             .navigationTitle("Planning")
         }
+    }
+
+    private func venueScanWorkspaceCard(for project: ProjectPackage) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Venue Scan Workspace")
+                    .font(.headline)
+                Spacer()
+                Text(store.venueCoverageDescription())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(.blue.opacity(0.12), in: Capsule())
+            }
+
+            if let session = store.venueScanSession {
+                Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
+                    .font(.subheadline)
+
+                Text(session.recommendedHint)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Text("Covered sides: \(session.coveredSides)/4")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                if session.capturedLandmarks.isEmpty {
+                    Text("No landmarks captured yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(session.capturedLandmarks, id: \.self) { landmark in
+                        Label(landmark, systemImage: "mappin.and.ellipse")
+                            .font(.subheadline)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Capture Landmark")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(store.availableMockLandmarks(), id: \.self) { landmark in
+                        Button {
+                            store.captureVenueLandmark(landmark)
+                        } label: {
+                            Label(landmark, systemImage: "plus.circle")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+
+                HStack {
+                    Button {
+                        store.advanceVenueCoverage()
+                    } label: {
+                        Label("Advance Coverage", systemImage: "arrow.triangle.branch")
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Save Scan") {
+                        store.finalizeVenueScanSession()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Discard") {
+                        store.discardVenueScanSession()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else {
+                Text("Start a planning scan to rehearse the landmark capture and relocalization workflow before ARKit is wired in.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Button {
+                    store.startVenueScanSession()
+                } label: {
+                    Label("Start Mock Venue Scan", systemImage: "camera.metering.matrix")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private var selectedLayoutInspector: some View {
