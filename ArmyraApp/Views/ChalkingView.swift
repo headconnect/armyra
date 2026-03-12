@@ -112,6 +112,33 @@ struct ChalkingView: View {
                                     ProgressView(value: session.progressFraction)
                                         .tint(confidenceColor(session.trackingConfidence))
 
+                                    if let currentSegment = session.currentSegment {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text("Current Segment")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            Text(currentSegment.label)
+                                                .font(.headline)
+                                            Text(segmentKindLabel(currentSegment.kind))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+
+                                    if !session.upcomingSegments.isEmpty {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text("Up Next")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+
+                                            ForEach(session.upcomingSegments) { segment in
+                                                Text(segment.label)
+                                                    .font(.subheadline)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                    }
+
                                     Text(session.recommendedHint)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
@@ -213,6 +240,15 @@ struct ChalkingView: View {
             return .orange
         case .low:
             return .red
+        }
+    }
+
+    private func segmentKindLabel(_ kind: GuideSegmentKind) -> String {
+        switch kind {
+        case .boundary:
+            return "Boundary line"
+        case .interior:
+            return "Interior marking"
         }
     }
 

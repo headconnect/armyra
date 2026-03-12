@@ -5,17 +5,20 @@ public struct FieldGeometry: Equatable, Sendable {
     public var interiorLines: [LineSegment]
     public var circles: [CircleMarking]
     public var guidePath: [LineSegment]
+    public var guideSegments: [GuideSegment]
 
     public init(
         boundary: [LineSegment],
         interiorLines: [LineSegment],
         circles: [CircleMarking],
-        guidePath: [LineSegment]
+        guidePath: [LineSegment],
+        guideSegments: [GuideSegment]
     ) {
         self.boundary = boundary
         self.interiorLines = interiorLines
         self.circles = circles
         self.guidePath = guidePath
+        self.guideSegments = guideSegments
     }
 
     public func transformed(using transform: FieldTransform) -> FieldGeometry {
@@ -23,7 +26,8 @@ public struct FieldGeometry: Equatable, Sendable {
             boundary: boundary.map { $0.transformed(using: transform) },
             interiorLines: interiorLines.map { $0.transformed(using: transform) },
             circles: circles.map { $0.transformed(using: transform) },
-            guidePath: guidePath.map { $0.transformed(using: transform) }
+            guidePath: guidePath.map { $0.transformed(using: transform) },
+            guideSegments: guideSegments.map { $0.transformed(using: transform) }
         )
     }
 }
@@ -46,21 +50,25 @@ public enum FieldGeometryBuilder {
         let bottomRight = Point2D(x: halfLength, y: -halfWidth)
         let bottomLeft = Point2D(x: -halfLength, y: -halfWidth)
 
-        var boundary = [
-            LineSegment(start: topLeft, end: topRight),
-            LineSegment(start: topRight, end: bottomRight),
-            LineSegment(start: bottomRight, end: bottomLeft),
-            LineSegment(start: bottomLeft, end: topLeft),
+        var boundarySegments = [
+            GuideSegment(kind: .boundary, label: "Top touchline", segment: LineSegment(start: topLeft, end: topRight)),
+            GuideSegment(kind: .boundary, label: "Right goal line", segment: LineSegment(start: topRight, end: bottomRight)),
+            GuideSegment(kind: .boundary, label: "Bottom touchline", segment: LineSegment(start: bottomRight, end: bottomLeft)),
+            GuideSegment(kind: .boundary, label: "Left goal line", segment: LineSegment(start: bottomLeft, end: topLeft)),
         ]
 
-        var interior: [LineSegment] = []
+        var interiorSegments: [GuideSegment] = []
         var circles: [CircleMarking] = []
 
         if markings.contains(.halfwayLine) {
-            interior.append(
-                LineSegment(
+            interiorSegments.append(
+                GuideSegment(
+                    kind: .interior,
+                    label: "Halfway line",
+                    segment: LineSegment(
                     start: Point2D(x: 0, y: halfWidth),
                     end: Point2D(x: 0, y: -halfWidth)
+                    )
                 )
             )
         }
@@ -76,13 +84,23 @@ public enum FieldGeometryBuilder {
         if markings.contains(.penaltyArea),
            let depth = dimensions.penaltyAreaDepthMeters,
            let width = dimensions.penaltyAreaWidthMeters {
-            interior.append(contentsOf: mirroredBox(depth: depth, width: width, pitchHalfLength: halfLength))
+            interiorSegments.append(contentsOf: mirroredBox(
+                depth: depth,
+                width: width,
+                pitchHalfLength: halfLength,
+                labelPrefix: "Penalty area"
+            ))
         }
 
         if markings.contains(.goalArea),
            let depth = dimensions.goalAreaDepthMeters,
            let width = dimensions.goalAreaWidthMeters {
-            interior.append(contentsOf: mirroredBox(depth: depth, width: width, pitchHalfLength: halfLength))
+            interiorSegments.append(contentsOf: mirroredBox(
+                depth: depth,
+                width: width,
+                pitchHalfLength: halfLength,
+                labelPrefix: "Goal area"
+            ))
         }
 
         if markings.contains(.penaltySpot), let spotDistance = dimensions.penaltySpotDistanceMeters {
@@ -90,18 +108,25 @@ public enum FieldGeometryBuilder {
             circles.append(CircleMarking(center: Point2D(x: halfLength - spotDistance, y: 0), radiusMeters: 0.15))
         }
 
-        boundary = boundary.filter { $0.start != $0.end }
-        interior = interior.filter { $0.start != $0.end }
+        boundarySegments = boundarySegments.filter { $0.segment.start != $0.segment.end }
+        interiorSegments = interiorSegments.filter { $0.segment.start != $0.segment.end }
+        let guideSegments = boundarySegments + interiorSegments
 
         return FieldGeometry(
-            boundary: boundary,
-            interiorLines: interior,
+            boundary: boundarySegments.map(\.segment),
+            interiorLines: interiorSegments.map(\.segment),
             circles: circles,
-            guidePath: boundary + interior
+            guidePath: guideSegments.map(\.segment),
+            guideSegments: guideSegments
         )
     }
 
-    private static func mirroredBox(depth: Double, width: Double, pitchHalfLength: Double) -> [LineSegment] {
+    private static func mirroredBox(
+        depth: Double,
+        width: Double,
+        pitchHalfLength: Double,
+        labelPrefix: String
+    ) -> [GuideSegment] {
         let halfBoxWidth = width / 2
         let leftBoundaryX = -pitchHalfLength
         let rightBoundaryX = pitchHalfLength
@@ -109,15 +134,15 @@ public enum FieldGeometryBuilder {
         let rightInnerX = rightBoundaryX - depth
 
         let leftBox = [
-            LineSegment(start: Point2D(x: leftInnerX, y: halfBoxWidth), end: Point2D(x: leftInnerX, y: -halfBoxWidth)),
-            LineSegment(start: Point2D(x: leftBoundaryX, y: halfBoxWidth), end: Point2D(x: leftInnerX, y: halfBoxWidth)),
-            LineSegment(start: Point2D(x: leftBoundaryX, y: -halfBoxWidth), end: Point2D(x: leftInnerX, y: -halfBoxWidth)),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) left spine", segment: LineSegment(start: Point2D(x: leftInnerX, y: halfBoxWidth), end: Point2D(x: leftInnerX, y: -halfBoxWidth))),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) left top", segment: LineSegment(start: Point2D(x: leftBoundaryX, y: halfBoxWidth), end: Point2D(x: leftInnerX, y: halfBoxWidth))),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) left bottom", segment: LineSegment(start: Point2D(x: leftBoundaryX, y: -halfBoxWidth), end: Point2D(x: leftInnerX, y: -halfBoxWidth))),
         ]
 
         let rightBox = [
-            LineSegment(start: Point2D(x: rightInnerX, y: halfBoxWidth), end: Point2D(x: rightInnerX, y: -halfBoxWidth)),
-            LineSegment(start: Point2D(x: rightInnerX, y: halfBoxWidth), end: Point2D(x: rightBoundaryX, y: halfBoxWidth)),
-            LineSegment(start: Point2D(x: rightInnerX, y: -halfBoxWidth), end: Point2D(x: rightBoundaryX, y: -halfBoxWidth)),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) right spine", segment: LineSegment(start: Point2D(x: rightInnerX, y: halfBoxWidth), end: Point2D(x: rightInnerX, y: -halfBoxWidth))),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) right top", segment: LineSegment(start: Point2D(x: rightInnerX, y: halfBoxWidth), end: Point2D(x: rightBoundaryX, y: halfBoxWidth))),
+            GuideSegment(kind: .interior, label: "\(labelPrefix) right bottom", segment: LineSegment(start: Point2D(x: rightInnerX, y: -halfBoxWidth), end: Point2D(x: rightBoundaryX, y: -halfBoxWidth))),
         ]
 
         return leftBox + rightBox

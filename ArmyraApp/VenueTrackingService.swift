@@ -24,7 +24,8 @@ struct MockVenueTrackingService: VenueTrackingService {
             completedSegments: 0,
             totalSegments: max(geometry.guidePath.count, 1),
             trackingConfidence: .good,
-            recommendedHint: hint
+            recommendedHint: hint,
+            guideSegments: geometry.guideSegments
         )
     }
 
@@ -43,7 +44,8 @@ struct MockVenueTrackingService: VenueTrackingService {
                 for: session.trackingConfidence,
                 project: project,
                 remainingSegments: max(totalSegments - nextCompletedSegments, 0)
-            )
+            ),
+            guideSegments: session.guideSegments
         )
     }
 
@@ -68,7 +70,8 @@ struct MockVenueTrackingService: VenueTrackingService {
                 for: nextConfidence,
                 project: project,
                 remainingSegments: max(session.totalSegments - session.completedSegments, 0)
-            )
+            ),
+            guideSegments: session.guideSegments
         )
     }
 
@@ -108,7 +111,8 @@ struct MockVenueTrackingService: VenueTrackingService {
             completedSegments: autoCompletedSegments,
             totalSegments: session.totalSegments,
             trackingConfidence: confidence,
-            recommendedHint: "\(trackingSnapshot.activeHint) \(guidanceBase)"
+            recommendedHint: "\(trackingSnapshot.activeHint) \(guidanceBase)",
+            guideSegments: session.guideSegments
         )
     }
 
