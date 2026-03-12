@@ -6,6 +6,7 @@ final class ProjectStore: ObservableObject {
     @Published var projects: [ProjectPackage]
     @Published var selectedProjectID: UUID?
     @Published var selectedTemplateID: UUID?
+    @Published var selectedLayoutID: UUID?
     @Published var exportPreview: ExportPreview?
 
     struct ExportPreview: Identifiable {
@@ -18,6 +19,7 @@ final class ProjectStore: ObservableObject {
         self.projects = projects
         self.selectedProjectID = projects.first?.id
         self.selectedTemplateID = projects.first?.templates.first?.id
+        self.selectedLayoutID = projects.first?.layouts.first?.id
     }
 
     var selectedProject: ProjectPackage? {
@@ -29,9 +31,19 @@ final class ProjectStore: ObservableObject {
         return project.templates.first(where: { $0.id == selectedTemplateID }) ?? project.templates.first
     }
 
+    var selectedLayout: FieldLayout? {
+        guard let project = selectedProject else { return nil }
+        return project.layouts.first(where: { $0.id == selectedLayoutID }) ?? project.layouts.first
+    }
+
     func selectProject(_ projectID: UUID) {
         selectedProjectID = projectID
         selectedTemplateID = selectedProject?.templates.first?.id
+        selectedLayoutID = selectedProject?.layouts.first?.id
+    }
+
+    func selectLayout(_ layoutID: UUID) {
+        selectedLayoutID = layoutID
     }
 
     func addLayoutFromSelectedTemplate() {
@@ -46,6 +58,7 @@ final class ProjectStore: ObservableObject {
         )
 
         projects[projectIndex].layouts.append(layout)
+        selectedLayoutID = layout.id
     }
 
     func showExportPreview() {
@@ -72,9 +85,64 @@ final class ProjectStore: ObservableObject {
         return markings.isEmpty ? "Outer perimeter only" : markings
     }
 
+    func updateSelectedLayoutName(_ name: String) {
+        updateSelectedLayout { layout in
+            layout.name = name
+        }
+    }
+
+    func updateSelectedLayoutLength(_ length: Double) {
+        updateSelectedLayout { layout in
+            layout.dimensions.lengthMeters = max(1, length)
+        }
+    }
+
+    func updateSelectedLayoutWidth(_ width: Double) {
+        updateSelectedLayout { layout in
+            layout.dimensions.widthMeters = max(1, width)
+        }
+    }
+
+    func updateSelectedLayoutRotationDegrees(_ degrees: Double) {
+        updateSelectedLayout { layout in
+            layout.transform.rotationRadians = degrees * .pi / 180
+        }
+    }
+
+    func updateSelectedLayoutOffsetX(_ offsetX: Double) {
+        updateSelectedLayout { layout in
+            layout.transform.translation.dx = offsetX
+        }
+    }
+
+    func updateSelectedLayoutOffsetY(_ offsetY: Double) {
+        updateSelectedLayout { layout in
+            layout.transform.translation.dy = offsetY
+        }
+    }
+
+    func updateSelectedLayoutLockMode(_ lockMode: PlacementLockMode) {
+        updateSelectedLayout { layout in
+            layout.lockMode = lockMode
+        }
+    }
+
+    func selectedLayoutRotationDegrees() -> Double {
+        guard let selectedLayout else { return 0 }
+        return selectedLayout.transform.rotationRadians * 180 / .pi
+    }
+
     private var selectedProjectIndex: Int? {
         guard let selectedProjectID else { return projects.isEmpty ? nil : 0 }
         return projects.firstIndex(where: { $0.id == selectedProjectID }) ?? (projects.isEmpty ? nil : 0)
+    }
+
+    private func updateSelectedLayout(_ update: (inout FieldLayout) -> Void) {
+        guard let projectIndex = selectedProjectIndex else { return }
+        guard let layoutID = selectedLayoutID ?? projects[projectIndex].layouts.first?.id else { return }
+        guard let layoutIndex = projects[projectIndex].layouts.firstIndex(where: { $0.id == layoutID }) else { return }
+
+        update(&projects[projectIndex].layouts[layoutIndex])
     }
 
     private func nextLayoutName(for pitchSize: PitchSize, layouts: [FieldLayout]) -> String {
