@@ -6,6 +6,7 @@
 - GitHub Actions now runs package tests, generates the Xcode project, builds the iOS simulator app, and uploads the artifact.
 - The planning workspace can now create layouts from templates, inspect export payloads, and edit selected layout dimensions, offsets, rotation, and lock mode.
 - The app now has basic `*.armyrafield` import/export plumbing and project duplication support, which moves it closer to real device testing once Apple signing is configured.
+- The planning screen now includes a top-down layout preview and basic overlap detection so placement changes can be reasoned about without AR.
 
 ## Active milestone: Planning workflow foundation
 The current development focus is to move from a static preview app toward a usable planning workflow.
@@ -25,6 +26,7 @@ The current development focus is to move from a static preview app toward a usab
 - Create, name, and inspect multiple layouts in one venue.
 - Surface template dimensions, enabled markings, and placement-lock intent.
 - Edit selected layout dimensions, offsets, rotation, and lock mode.
+- Preview relative placement in a top-down planning view and surface simple overlap warnings.
 - Preview exportable package content from inside the app.
 
 ### Milestone 2: Package exchange

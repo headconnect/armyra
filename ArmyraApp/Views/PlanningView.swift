@@ -11,6 +11,7 @@ struct PlanningView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             summaryCard(for: project)
+                            planningPreviewCard(for: project)
                             templatePickerCard
                             selectedLayoutInspector
 
@@ -192,6 +193,43 @@ struct PlanningView: View {
             } else {
                 Text("Pick a layout card below to edit its placement and dimensions.")
                     .foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func planningPreviewCard(for project: ProjectPackage) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Top-Down Preview")
+                    .font(.headline)
+                Spacer()
+                if let extent = store.planningExtent() {
+                    Text("\(Int(extent.width))m x \(Int(extent.height))m")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            PlanningPreviewView(
+                layouts: project.layouts,
+                selectedLayoutID: store.selectedLayout?.id
+            )
+            .frame(height: 240)
+
+            let overlaps = store.overlappingLayoutNames()
+            if overlaps.isEmpty {
+                Text("No layout overlaps detected in the current top-down plan.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(overlaps, id: \.self) { overlap in
+                    Label(overlap, systemImage: "exclamationmark.triangle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                }
             }
         }
         .padding()

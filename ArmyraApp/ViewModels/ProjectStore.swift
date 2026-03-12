@@ -211,6 +211,27 @@ final class ProjectStore: ObservableObject {
         return selectedLayout.transform.rotationRadians * 180 / .pi
     }
 
+    func boundingBox(for layout: FieldLayout) -> FieldBoundingBox {
+        FieldLayoutAnalysis.boundingBox(for: layout)
+    }
+
+    func planningExtent() -> FieldBoundingBox? {
+        guard let project = selectedProject else { return nil }
+        let boxes = project.layouts.map { FieldLayoutAnalysis.boundingBox(for: $0) }
+        return FieldBoundingBox.union(boxes)
+    }
+
+    func overlappingLayoutNames() -> [String] {
+        guard let project = selectedProject else { return [] }
+        let nameByID = Dictionary(uniqueKeysWithValues: project.layouts.map { ($0.id, $0.name) })
+
+        return FieldLayoutAnalysis.overlaps(in: project.layouts).map { overlap in
+            let first = nameByID[overlap.firstLayoutID] ?? "Unknown"
+            let second = nameByID[overlap.secondLayoutID] ?? "Unknown"
+            return "\(first) overlaps \(second)"
+        }
+    }
+
     private var selectedProjectIndex: Int? {
         guard let selectedProjectID else { return projects.isEmpty ? nil : 0 }
         return projects.firstIndex(where: { $0.id == selectedProjectID }) ?? (projects.isEmpty ? nil : 0)
