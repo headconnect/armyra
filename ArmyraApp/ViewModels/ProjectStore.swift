@@ -282,30 +282,40 @@ final class ProjectStore: ObservableObject {
     }
 
     func updateVenueScanPreferredStartEdge(_ edge: String) {
-        guard let venueScanSession, let project = selectedProject else { return }
-        let updatedSession = venueScanService.updatePreferredEdges(
-            startEdge: edge,
-            recoveryEdge: venueScanSession.preferredRecoveryEdge,
-            session: venueScanSession
-        )
-        self.venueScanSession = updatedSession
-        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
-            for: venueScanDraft(session: updatedSession, original: project.venueScan)
-        )
+        if let venueScanSession, let project = selectedProject {
+            let updatedSession = venueScanService.updatePreferredEdges(
+                startEdge: edge,
+                recoveryEdge: venueScanSession.preferredRecoveryEdge,
+                session: venueScanSession
+            )
+            self.venueScanSession = updatedSession
+            planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+                for: venueScanDraft(session: updatedSession, original: project.venueScan)
+            )
+        } else {
+            updateSavedVenueScan { venueScan in
+                venueScan.preferredStartEdge = edge
+            }
+        }
         recordPlanningDiagnostics(.refreshed)
     }
 
     func updateVenueScanPreferredRecoveryEdge(_ edge: String) {
-        guard let venueScanSession, let project = selectedProject else { return }
-        let updatedSession = venueScanService.updatePreferredEdges(
-            startEdge: venueScanSession.preferredStartEdge,
-            recoveryEdge: edge,
-            session: venueScanSession
-        )
-        self.venueScanSession = updatedSession
-        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
-            for: venueScanDraft(session: updatedSession, original: project.venueScan)
-        )
+        if let venueScanSession, let project = selectedProject {
+            let updatedSession = venueScanService.updatePreferredEdges(
+                startEdge: venueScanSession.preferredStartEdge,
+                recoveryEdge: edge,
+                session: venueScanSession
+            )
+            self.venueScanSession = updatedSession
+            planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(
+                for: venueScanDraft(session: updatedSession, original: project.venueScan)
+            )
+        } else {
+            updateSavedVenueScan { venueScan in
+                venueScan.preferredRecoveryEdge = edge
+            }
+        }
         recordPlanningDiagnostics(.refreshed)
     }
 
@@ -749,6 +759,12 @@ final class ProjectStore: ObservableObject {
         guard let layoutIndex = projects[projectIndex].layouts.firstIndex(where: { $0.id == layoutID }) else { return }
 
         update(&projects[projectIndex].layouts[layoutIndex])
+    }
+
+    private func updateSavedVenueScan(_ update: (inout VenueScan) -> Void) {
+        guard let projectIndex = selectedProjectIndex else { return }
+        update(&projects[projectIndex].venueScan)
+        planningTrackingSnapshot = arSessionCoordinator.planningSnapshot(for: projects[projectIndex].venueScan)
     }
 
     private func venueScanDraft(session: VenueScanSessionState, original: VenueScan) -> VenueScan {

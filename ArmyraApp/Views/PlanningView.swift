@@ -725,6 +725,8 @@ struct PlanningView: View {
                     }
                 }
 
+                handoffRouteReviewSection
+
                 ForEach(readiness.issues) { issue in
                     Label(issue.message, systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
                         .font(.subheadline)
@@ -833,6 +835,55 @@ struct PlanningView: View {
             return "Start-side candidate"
         case .recoveryCandidate:
             return "Recovery-side candidate"
+        }
+    }
+
+    @ViewBuilder
+    private var handoffRouteReviewSection: some View {
+        let edgeOptions = store.availableVenueScanEdgeOptions()
+        let currentStartEdge = store.venueScanSession?.preferredStartEdge ?? store.selectedProject?.venueScan.preferredStartEdge
+        let currentRecoveryEdge = store.venueScanSession?.preferredRecoveryEdge ?? store.selectedProject?.venueScan.preferredRecoveryEdge
+
+        if edgeOptions.isEmpty == false {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Handoff Route Review")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Menu {
+                    ForEach(edgeOptions, id: \.self) { edge in
+                        Button(edge) {
+                            store.updateVenueScanPreferredStartEdge(edge)
+                        }
+                    }
+                } label: {
+                    Label(
+                        "Primary re-entry zone: \(currentStartEdge ?? "Choose edge")",
+                        systemImage: "flag.fill"
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+
+                Menu {
+                    ForEach(edgeOptions, id: \.self) { edge in
+                        Button(edge) {
+                            store.updateVenueScanPreferredRecoveryEdge(edge)
+                        }
+                    }
+                } label: {
+                    Label(
+                        "Backup recovery zone: \(currentRecoveryEdge ?? "Choose edge")",
+                        systemImage: "arrow.uturn.backward.circle.fill"
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+
+                Text("Review this route before handoff so parents start from the intended edge and know which backup zone to return to.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
