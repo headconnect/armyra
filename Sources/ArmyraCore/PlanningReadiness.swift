@@ -23,6 +23,7 @@ public struct PlanningReadinessSummary: Equatable, Sendable {
     public var score: Double
     public var parentSafe: Bool
     public var summary: String
+    public var handoffGuidance: [String]
     public var issues: [PlanningReadinessIssue]
 
     public init(
@@ -30,12 +31,14 @@ public struct PlanningReadinessSummary: Equatable, Sendable {
         score: Double,
         parentSafe: Bool,
         summary: String,
+        handoffGuidance: [String],
         issues: [PlanningReadinessIssue]
     ) {
         self.level = level
         self.score = score
         self.parentSafe = parentSafe
         self.summary = summary
+        self.handoffGuidance = handoffGuidance
         self.issues = issues
     }
 }
@@ -48,6 +51,7 @@ public enum PlanningReadinessAnalyzer {
         let corridorSummary = FieldLayoutAnalysis.setupCorridorSummary(in: project.layouts)
         let venueScanReadiness = VenueScanReadinessAnalyzer.summarize(venueScan: project.venueScan)
         var issues: [PlanningReadinessIssue] = []
+        var handoffGuidance: [String] = []
         var score = venueScanReadiness.score
 
         issues.append(contentsOf: venueScanReadiness.issues.map {
@@ -100,6 +104,12 @@ public enum PlanningReadinessAnalyzer {
                 corridorSummary.widestHorizontalBandMeters,
                 corridorSummary.widestVerticalBandMeters
             )
+            let expectedBoundaryOrientation: VenueEdgeOrientation =
+                corridorSummary.preferredAxis == .vertical ? .horizontalBoundary : .verticalBoundary
+            let corridorGuidance = corridorSummary.preferredAxis == .vertical
+                ? "Preferred venue approach is north-south, so the handoff should favor goal-line style re-entry zones."
+                : "Preferred venue approach is east-west, so the handoff should favor touchline style re-entry zones."
+            handoffGuidance.append(corridorGuidance)
 
             if bestCorridorWidth < 4 {
                 issues.append(
@@ -122,14 +132,24 @@ public enum PlanningReadinessAnalyzer {
                 score -= 0.08
             }
 
-            let expectedBoundaryOrientation: VenueEdgeOrientation =
-                corridorSummary.preferredAxis == .vertical ? .horizontalBoundary : .verticalBoundary
+            let chosenEntryEdges: [(kind: String, label: String, orientation: VenueEdgeOrientation)] = [
+                project.venueScan.preferredStartEdge.map { ("Primary re-entry zone", $0, FieldLayoutAnalysis.inferEdgeOrientation(from: $0)) },
+                project.venueScan.preferredRecoveryEdge.map { ("Backup recovery zone", $0, FieldLayoutAnalysis.inferEdgeOrientation(from: $0)) }
+            ]
+            .compactMap { entry in
+                guard let entry, let orientation = entry.2 else { return nil }
+                return (entry.0, entry.1, orientation)
+            }
 
-            let chosenEdges = [project.venueScan.preferredStartEdge, project.venueScan.preferredRecoveryEdge]
-                .compactMap { $0 }
-                .compactMap(FieldLayoutAnalysis.inferEdgeOrientation(from:))
+            if let startEdge = project.venueScan.preferredStartEdge {
+                handoffGuidance.append("Primary re-entry zone: \(startEdge).")
+            }
 
-            if chosenEdges.isEmpty == false && chosenEdges.allSatisfy({ $0 != expectedBoundaryOrientation }) {
+            if let recoveryEdge = project.venueScan.preferredRecoveryEdge {
+                handoffGuidance.append("Backup recovery zone: \(recoveryEdge).")
+            }
+
+            if chosenEntryEdges.isEmpty == false && chosenEntryEdges.allSatisfy({ $0.orientation != expectedBoundaryOrientation }) {
                 issues.append(
                     PlanningReadinessIssue(
                         message: "The chosen start and recovery edges do not seem to line up with the strongest venue setup corridor.",
@@ -137,6 +157,14 @@ public enum PlanningReadinessAnalyzer {
                     )
                 )
                 score -= 0.08
+            } else if chosenEntryEdges.contains(where: { $0.orientation != expectedBoundaryOrientation }) {
+                issues.append(
+                    PlanningReadinessIssue(
+                        message: "One of the chosen re-entry zones does not line up with the strongest venue setup corridor.",
+                        level: .caution
+                    )
+                )
+                score -= 0.05
             }
         }
 
@@ -176,6 +204,7 @@ public enum PlanningReadinessAnalyzer {
             score: score,
             parentSafe: level == .ready || (level == .caution && venueScanReadiness.canLockForHandoff),
             summary: summary,
+            handoffGuidance: handoffGuidance,
             issues: issues
         )
     }

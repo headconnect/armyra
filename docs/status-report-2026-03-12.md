@@ -4,6 +4,7 @@
 - Active branch: `codex/ios-foundation`
 - Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, and role-aware handoff gating.
 - Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, role-aware handoff gating, and a checklist-driven venue capture routine.
+- Latest completed work now also includes explicit re-entry zone guidance tied to the venue’s strongest setup corridor, so planning can review a concrete parent handoff route.
 - Repo-side signing is now configured for first device testing with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
@@ -46,6 +47,7 @@
   - Tag captured landmarks as start-side candidates, recovery-side candidates, or general references
   - See a handoff checklist showing whether the scan includes explicit start-side, recovery-side, and general-reference landmarks
   - See a capture routine with completed and pending steps plus a single next-best action for the club rep
+  - See a re-entry plan that spells out the primary start zone, backup recovery zone, and whether those choices align with the clearest setup corridor through the venue
   - Get warned if the chosen start/recovery edges are not backed by the corresponding tagged landmarks
   - See when captured landmarks are too clustered around one part of the venue to make a robust handoff
   - Get a concrete next-capture suggestion when landmark spread is weak, such as capturing a durable reference on another side of the venue
@@ -102,6 +104,7 @@ Keep tightening the club-side handoff quality:
 - Add stronger multi-pitch practicality checks beyond overlap, especially around setup room and likely chalking lanes
 - Continue replacing generic capture success with more operational `safe to hand off` criteria as device testing becomes possible
 - Keep improving venue capture guidance so landmark roles, checklist steps, and recovery instructions reflect real field-day behavior, not only label heuristics
+- Keep tightening the re-entry plan so the rep can hand over a route through the ground, not just two labeled edges
 
 ## Signing note
 - Apple Developer enrollment is now active enough for repo-side signing configuration.

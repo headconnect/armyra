@@ -711,6 +711,20 @@ struct PlanningView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
+                if readiness.handoffGuidance.isEmpty == false {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Re-entry plan")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ForEach(readiness.handoffGuidance, id: \.self) { line in
+                            Label(line, systemImage: "arrow.turn.down.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 ForEach(readiness.issues) { issue in
                     Label(issue.message, systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
                         .font(.subheadline)

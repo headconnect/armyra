@@ -113,5 +113,44 @@ final class PlanningReadinessTests: XCTestCase {
         let summary = PlanningReadinessAnalyzer.summarize(project: project)
 
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("do not seem to line up") }))
+        XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Preferred venue approach is east-west") }))
+        XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Primary re-entry zone: West fence side") }))
+    }
+
+    func testAlignedHandoffEdgesProduceReentryGuidanceWithoutMismatchWarning() {
+        let template = FieldTemplateLibrary.fiveAside
+        let project = ProjectPackage(
+            projectName: "Open Grounds",
+            venueScan: VenueScan(
+                venueName: "Main Field",
+                landmarkNotes: ["West fence", "East fence", "Clubhouse goal end", "South car park"],
+                landmarks: [
+                    VenueLandmark(label: "Clubhouse goal end", role: .startCandidate),
+                    VenueLandmark(label: "South car park", role: .recoveryCandidate),
+                    VenueLandmark(label: "West fence", role: .general),
+                    VenueLandmark(label: "East fence", role: .general),
+                ],
+                recommendedRelocalizationHints: ["Start by the clubhouse end.", "Recover by the south car park end."],
+                preferredStartEdge: "Clubhouse goal end",
+                preferredRecoveryEdge: "South car park side",
+                scanCoverageScore: 0.92
+            ),
+            templates: [template],
+            layouts: [
+                template.makeLayout(
+                    named: "5A",
+                    transform: FieldTransform(translation: Vector2D(dx: -25, dy: 0))
+                ),
+                template.makeLayout(
+                    named: "5B",
+                    transform: FieldTransform(translation: Vector2D(dx: 25, dy: 0))
+                )
+            ]
+        )
+
+        let summary = PlanningReadinessAnalyzer.summarize(project: project)
+
+        XCTAssertFalse(summary.issues.contains(where: { $0.message.contains("re-entry zones") }))
+        XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Backup recovery zone: South car park side") }))
     }
 }
