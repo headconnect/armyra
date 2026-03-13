@@ -119,6 +119,33 @@ struct PlanningView: View {
                         }
                     }
 
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Capture routine")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ForEach(scanReadiness.checklistItems) { item in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Label(
+                                    item.title,
+                                    systemImage: item.status == .complete ? "checkmark.circle.fill" : "circle.dotted"
+                                )
+                                .font(.caption)
+                                .foregroundStyle(item.status == .complete ? .green : .primary)
+
+                                Text(item.detail)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    if let nextAction = scanReadiness.nextAction {
+                        Label("Next best action: \(nextAction)", systemImage: "arrow.forward.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                    }
+
                     if let spreadGuidance = store.venueSpreadGuidanceText() {
                         Label(spreadGuidance, systemImage: "point.topleft.down.curvedto.point.bottomright.up")
                             .font(.caption)

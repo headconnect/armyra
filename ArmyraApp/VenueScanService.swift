@@ -132,6 +132,26 @@ struct MockVenueScanService: VenueScanService {
         let defaultRecoveryEdge = landmarks.first(where: { $0.role == .recoveryCandidate })?.label
             ?? (coveredSides >= 2 ? capturedLandmarks.dropFirst().first ?? capturedLandmarks.first : nil)
         let preferredRecoveryEdge = preferredRecoveryEdgeOverride ?? defaultRecoveryEdge
+        let baseHint = recommendation(
+            preferredStartEdge: preferredStartEdge,
+            preferredRecoveryEdge: preferredRecoveryEdge,
+            coveredSides: coveredSides,
+            readinessScore: readinessScore,
+            landmarks: landmarks,
+            fallbackHint: fallbackHint
+        )
+        let provisionalSession = VenueScanSessionState(
+            venueName: venueName,
+            capturedLandmarks: capturedLandmarks,
+            landmarks: landmarks,
+            coveredSides: coveredSides,
+            preferredStartEdge: preferredStartEdge,
+            preferredRecoveryEdge: preferredRecoveryEdge,
+            readinessScore: readinessScore,
+            phase: phase,
+            recommendedHint: baseHint
+        )
+        let checklistHint = VenueScanReadinessAnalyzer.summarize(session: provisionalSession).nextAction
 
         return VenueScanSessionState(
             venueName: venueName,
@@ -142,14 +162,7 @@ struct MockVenueScanService: VenueScanService {
             preferredRecoveryEdge: preferredRecoveryEdge,
             readinessScore: readinessScore,
             phase: phase,
-            recommendedHint: recommendation(
-                preferredStartEdge: preferredStartEdge,
-                preferredRecoveryEdge: preferredRecoveryEdge,
-                coveredSides: coveredSides,
-                readinessScore: readinessScore,
-                landmarks: landmarks,
-                fallbackHint: fallbackHint
-            )
+            recommendedHint: checklistHint ?? baseHint
         )
     }
 

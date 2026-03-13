@@ -6,6 +6,11 @@ public enum VenueScanReadinessLevel: String, Codable, CaseIterable, Sendable {
     case needsWork
 }
 
+public enum VenueCaptureChecklistStatus: String, Codable, CaseIterable, Sendable {
+    case complete
+    case needsAttention
+}
+
 public struct VenueScanReadinessIssue: Equatable, Identifiable, Sendable {
     public var id: UUID
     public var message: String
@@ -15,6 +20,25 @@ public struct VenueScanReadinessIssue: Equatable, Identifiable, Sendable {
         self.id = id
         self.message = message
         self.level = level
+    }
+}
+
+public struct VenueCaptureChecklistItem: Equatable, Identifiable, Sendable {
+    public var id: UUID
+    public var title: String
+    public var detail: String
+    public var status: VenueCaptureChecklistStatus
+
+    public init(
+        id: UUID = UUID(),
+        title: String,
+        detail: String,
+        status: VenueCaptureChecklistStatus
+    ) {
+        self.id = id
+        self.title = title
+        self.detail = detail
+        self.status = status
     }
 }
 
@@ -31,6 +55,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
     public var suggestedCaptureZones: [String]
     public var inferredLandmarkKindCount: Int
     public var suggestedCaptureKinds: [String]
+    public var checklistItems: [VenueCaptureChecklistItem]
+    public var nextAction: String?
     public var issues: [VenueScanReadinessIssue]
 
     public init(
@@ -46,6 +72,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         suggestedCaptureZones: [String],
         inferredLandmarkKindCount: Int,
         suggestedCaptureKinds: [String],
+        checklistItems: [VenueCaptureChecklistItem],
+        nextAction: String?,
         issues: [VenueScanReadinessIssue]
     ) {
         self.level = level
@@ -60,6 +88,8 @@ public struct VenueScanReadinessSummary: Equatable, Sendable {
         self.suggestedCaptureZones = suggestedCaptureZones
         self.inferredLandmarkKindCount = inferredLandmarkKindCount
         self.suggestedCaptureKinds = suggestedCaptureKinds
+        self.checklistItems = checklistItems
+        self.nextAction = nextAction
         self.issues = issues
     }
 }
@@ -349,6 +379,22 @@ public enum VenueScanReadinessAnalyzer {
             summary = "Venue scan is not robust enough to hand off yet."
         }
 
+        let checklistItems = makeChecklistItems(
+            hasPreferredStartEdge: hasPreferredStartEdge,
+            hasPreferredRecoveryEdge: hasPreferredRecoveryEdge,
+            preferredStartEdgeMatchesRole: preferredStartEdgeMatchesRole,
+            preferredRecoveryEdgeMatchesRole: preferredRecoveryEdgeMatchesRole,
+            startCandidateCount: startCandidateCount,
+            recoveryCandidateCount: recoveryCandidateCount,
+            generalLandmarkCount: generalLandmarkCount,
+            coveredSides: coveredSides,
+            inferredLandmarkZoneCount: inferredLandmarkZoneCount,
+            inferableLandmarkCount: inferableLandmarkCount,
+            inferredLandmarkKindCount: inferredLandmarkKindCount,
+            sameEdgeChosen: startEdgeLabel?.caseInsensitiveCompare(recoveryEdgeLabel ?? "") == .orderedSame
+        )
+        let nextAction = checklistItems.first(where: { $0.status == .needsAttention })?.detail
+
         return VenueScanReadinessSummary(
             level: level,
             score: score,
@@ -362,8 +408,62 @@ public enum VenueScanReadinessAnalyzer {
             suggestedCaptureZones: suggestedCaptureZones,
             inferredLandmarkKindCount: inferredLandmarkKindCount,
             suggestedCaptureKinds: suggestedCaptureKinds,
+            checklistItems: checklistItems,
+            nextAction: nextAction,
             issues: issues
         )
+    }
+
+    private static func makeChecklistItems(
+        hasPreferredStartEdge: Bool,
+        hasPreferredRecoveryEdge: Bool,
+        preferredStartEdgeMatchesRole: Bool,
+        preferredRecoveryEdgeMatchesRole: Bool,
+        startCandidateCount: Int,
+        recoveryCandidateCount: Int,
+        generalLandmarkCount: Int,
+        coveredSides: Int,
+        inferredLandmarkZoneCount: Int,
+        inferableLandmarkCount: Int,
+        inferredLandmarkKindCount: Int,
+        sameEdgeChosen: Bool
+    ) -> [VenueCaptureChecklistItem] {
+        let startReady = startCandidateCount > 0 && hasPreferredStartEdge && preferredStartEdgeMatchesRole
+        let recoveryReady = recoveryCandidateCount > 0
+            && hasPreferredRecoveryEdge
+            && preferredRecoveryEdgeMatchesRole
+            && !sameEdgeChosen
+        let generalReady = generalLandmarkCount > 0
+        let spreadReady = coveredSides >= 2 && (inferableLandmarkCount == 0 || inferredLandmarkZoneCount >= 2)
+        let durableVarietyReady = inferableLandmarkCount == 0 || inferredLandmarkKindCount >= 2
+
+        return [
+            VenueCaptureChecklistItem(
+                title: "Set the start edge",
+                detail: "Tag one durable landmark as the start-side candidate and confirm that exact edge for first relocalization.",
+                status: startReady ? .complete : .needsAttention
+            ),
+            VenueCaptureChecklistItem(
+                title: "Set a separate recovery edge",
+                detail: "Tag a different durable landmark as the recovery-side candidate so parents have a distinct fallback edge.",
+                status: recoveryReady ? .complete : .needsAttention
+            ),
+            VenueCaptureChecklistItem(
+                title: "Keep a general fallback landmark",
+                detail: "Leave at least one captured landmark as a general reference so recovery is not tied to only the start and recovery edges.",
+                status: generalReady ? .complete : .needsAttention
+            ),
+            VenueCaptureChecklistItem(
+                title: "Spread coverage around the venue",
+                detail: "Capture durable landmarks on more than one side of the ground so tracking is not effectively one-sided.",
+                status: spreadReady ? .complete : .needsAttention
+            ),
+            VenueCaptureChecklistItem(
+                title: "Mix durable landmark types",
+                detail: "Capture at least two kinds of durable objects, such as a fence plus a building or light post.",
+                status: durableVarietyReady ? .complete : .needsAttention
+            ),
+        ]
     }
 
     private static func roleCounts(for landmarks: [VenueLandmark]) -> (

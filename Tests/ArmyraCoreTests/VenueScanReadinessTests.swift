@@ -17,6 +17,8 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.level, .needsWork)
         XCTAssertFalse(summary.canLockForHandoff)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("Only one edge") }))
+        XCTAssertEqual(summary.checklistItems.filter { $0.status == .complete }.count, 0)
+        XCTAssertEqual(summary.nextAction, summary.checklistItems.first?.detail)
     }
 
     func testBroadVenueScanCanLockForHandoff() {
@@ -48,6 +50,8 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.recoveryCandidateCount, 1)
         XCTAssertEqual(summary.inferredLandmarkZoneCount, 4)
         XCTAssertGreaterThanOrEqual(summary.inferredLandmarkKindCount, 4)
+        XCTAssertTrue(summary.checklistItems.allSatisfy { $0.status == .complete })
+        XCTAssertNil(summary.nextAction)
     }
 
     func testSameStartAndRecoveryEdgeProducesCaution() {
@@ -174,5 +178,9 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertTrue(summary.suggestedCaptureZones.contains("east"))
         XCTAssertTrue(summary.suggestedCaptureKinds.contains("building"))
         XCTAssertTrue(summary.suggestedCaptureKinds.contains("light post"))
+        XCTAssertTrue(summary.checklistItems.contains(where: {
+            $0.title == "Spread coverage around the venue" && $0.status == .needsAttention
+        }))
+        XCTAssertTrue(summary.nextAction?.contains("more than one side of the ground") == true)
     }
 }

@@ -32,6 +32,7 @@
 - Venue-scan readiness now also checks whether captured landmarks are actually spread around the venue, which helps catch scans that look complete on paper but are still clustered on one side in practice.
 - The planning workspace now turns poor landmark spread into an explicit next capture suggestion, so the rep gets a concrete “go capture the east/north side” style instruction instead of only a warning.
 - The planning workspace now also suggests a better landmark type when capture quality is weak, nudging the rep toward durable references like fences, buildings, or light posts instead of repeated vague objects.
+- The venue scan gate now also exposes a concrete capture routine with completed and pending steps plus a single next-best action, moving the club workflow closer to an operational checklist instead of a warning list.
 - The XcodeGen project is now preconfigured with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`, so the repo is ready for first-time device signing when opened in Xcode on a Mac.
 
 ## Active milestone: Field-day UX
@@ -45,6 +46,7 @@ The current development focus is to make the handoff from club rep to parent fee
 ### Next after this slice
 - Add clearer planner validation around practical spacing and low-confidence venue scans so `ready for chalking` means something operationally.
 - Deepen the club capture checklist with more explicit re-entry zone language and stronger multi-pitch practicality checks before handoff.
+- Keep turning venue capture into a checklist-first workflow so the club rep can follow a routine rather than interpreting scattered readiness warnings.
 - Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Use explicit landmark roles more directly in readiness scoring so handoff confidence depends less on label heuristics over time.
 - Add role-aware capture guidance that nudges the rep toward a more balanced landmark spread, not just one start object and one fallback object.
