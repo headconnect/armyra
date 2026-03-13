@@ -10,7 +10,7 @@ struct PlanningView: View {
                 if let project = store.selectedProject {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
-                            summaryCard(for: project)
+                            planningFlowCard(for: project)
                             readinessCard
                             venueScanWorkspaceCard(for: project)
                             planningPreviewCard(for: project)
@@ -74,7 +74,7 @@ struct PlanningView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Venue Scan Workspace")
+                Text("Step 1: Scan Venue")
                     .font(.headline)
                 Spacer()
                 Text(store.venueCoverageDescription())
@@ -385,7 +385,7 @@ struct PlanningView: View {
 
     private var selectedLayoutInspector: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Selected Layout")
+            Text("Step 4: Layout Details")
                 .font(.headline)
 
             if let layout = store.selectedLayout {
@@ -546,7 +546,7 @@ struct PlanningView: View {
     private func planningPreviewCard(for project: ProjectPackage) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Top-Down Preview")
+                Text("Step 3: Validate Layout Plan")
                     .font(.headline)
                 Spacer()
                 if let extent = store.planningExtent() {
@@ -603,7 +603,7 @@ struct PlanningView: View {
 
     private var templatePickerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Create Layout")
+            Text("Step 2: Place Pitches")
                 .font(.headline)
 
             if let project = store.selectedProject {
@@ -665,22 +665,30 @@ struct PlanningView: View {
         }
     }
 
-    private func summaryCard(for project: ProjectPackage) -> some View {
+    private func planningFlowCard(for project: ProjectPackage) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Venue Scan")
+            Text("Planning Flow")
                 .font(.headline)
 
-            Text("\(project.venueScan.venueName) has \(project.venueScan.landmarkNotes.count) landmark notes and \(project.venueScan.recommendedRelocalizationHints.count) recovery hints.")
+            Text("Move through scan, pitch placement, validation, and route review before handing the package to parents.")
                 .foregroundStyle(.secondary)
 
-            preferredEdgeSummary(
-                startEdge: project.venueScan.preferredStartEdge,
-                recoveryEdge: project.venueScan.preferredRecoveryEdge
-            )
-
-            ForEach(project.venueScan.landmarkNotes, id: \.self) { note in
-                Label(note, systemImage: "mappin.and.ellipse")
-                    .font(.subheadline)
+            VStack(alignment: .leading, spacing: 6) {
+                flowLine(
+                    number: "1",
+                    title: "Scan \(project.venueScan.venueName)",
+                    detail: "\(project.venueScan.landmarkNotes.count) landmark notes, \(project.venueScan.recommendedRelocalizationHints.count) recovery hints"
+                )
+                flowLine(
+                    number: "2",
+                    title: "Place and name pitches",
+                    detail: "\(project.layouts.count) saved layouts ready for review"
+                )
+                flowLine(
+                    number: "3",
+                    title: "Check spacing and route",
+                    detail: "Use the validation and re-entry plan before handoff"
+                )
             }
         }
         .padding()
@@ -690,7 +698,7 @@ struct PlanningView: View {
 
     private var readinessCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Chalking Readiness")
+            Text("Step 4: Approve For Parents")
                 .font(.headline)
 
             if let readiness = store.planningReadinessSummary() {
@@ -711,38 +719,49 @@ struct PlanningView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if readiness.handoffGuidance.isEmpty == false {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Re-entry plan")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        ForEach(readiness.handoffGuidance, id: \.self) { line in
-                            Label(line, systemImage: "arrow.turn.down.right")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                if let primaryIssue = readiness.issues.first {
+                    Label(primaryIssue.message, systemImage: primaryIssue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(primaryIssue.level == .needsWork ? .red : .orange)
                 }
 
                 handoffRouteReviewSection
 
-                ForEach(readiness.issues) { issue in
-                    Label(issue.message, systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(issue.level == .needsWork ? .red : .orange)
-                }
+                DisclosureGroup("Review Details") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if readiness.handoffGuidance.isEmpty == false {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Re-entry plan")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
 
-                ForEach(store.tightSpacingWarnings(), id: \.self) { warning in
-                    Label(warning, systemImage: "ruler.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                }
+                                ForEach(readiness.handoffGuidance, id: \.self) { line in
+                                    Label(line, systemImage: "arrow.turn.down.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
 
-                ForEach(store.practicalLaneWarnings(), id: \.self) { warning in
-                    Label(warning, systemImage: "figure.walk")
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
+                        ForEach(Array(readiness.issues.dropFirst())) { issue in
+                            Label(issue.message, systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(issue.level == .needsWork ? .red : .orange)
+                        }
+
+                        ForEach(store.tightSpacingWarnings(), id: \.self) { warning in
+                            Label(warning, systemImage: "ruler.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(.orange)
+                        }
+
+                        ForEach(store.practicalLaneWarnings(), id: \.self) { warning in
+                            Label(warning, systemImage: "figure.walk")
+                                .font(.subheadline)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    .padding(.top, 6)
                 }
             }
         }
@@ -835,6 +854,25 @@ struct PlanningView: View {
             return "Start-side candidate"
         case .recoveryCandidate:
             return "Recovery-side candidate"
+        }
+    }
+
+    @ViewBuilder
+    private func flowLine(number: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text(number)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.blue)
+                .frame(width: 22, height: 22)
+                .background(.blue.opacity(0.12), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

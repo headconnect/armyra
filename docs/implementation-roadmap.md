@@ -35,6 +35,7 @@
 - The venue scan gate now also exposes a concrete capture routine with completed and pending steps plus a single next-best action, moving the club workflow closer to an operational checklist instead of a warning list.
 - Planning readiness now also spells out a primary re-entry zone, a backup recovery zone, and whether those choices actually align with the strongest setup corridor across the venue.
 - The planner now also exposes a persistent handoff-route review step, so the club can revisit and override the primary or backup re-entry zone even after a scan has been saved.
+- The main app surfaces are now being simplified around task flow: import/export stays on `Projects`, planning is framed as steps, and active chalking is promoted into a dedicated run-focused screen instead of sharing space equally with setup details.
 - The XcodeGen project is now preconfigured with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`, so the repo is ready for first-time device signing when opened in Xcode on a Mac.
 
 ## Active milestone: Field-day UX
@@ -51,6 +52,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Keep turning venue capture into a checklist-first workflow so the club rep can follow a routine rather than interpreting scattered readiness warnings.
 - Keep refining the re-entry zone plan so the club can hand parents a concrete approach path, not only a pair of labeled edges.
 - Keep strengthening the post-scan route review so saved packages can still be corrected before they are handed to volunteers.
+- Keep simplifying the visible workflow so the strongest next action is obvious on each screen and the app reads less like a prototype console.
 - Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Use explicit landmark roles more directly in readiness scoring so handoff confidence depends less on label heuristics over time.
 - Add role-aware capture guidance that nudges the rep toward a more balanced landmark spread, not just one start object and one fallback object.

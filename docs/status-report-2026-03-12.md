@@ -6,6 +6,7 @@
 - Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, role-aware handoff gating, and a checklist-driven venue capture routine.
 - Latest completed work now also includes explicit re-entry zone guidance tied to the venue’s strongest setup corridor, so planning can review a concrete parent handoff route.
 - The saved planner flow now also includes a persistent handoff-route review step, so start and recovery zones can be corrected even after the scan itself is finished.
+- The current UX pass is also simplifying the visible workflow so task screens behave more like focused tools and less like mixed planning/debug dashboards.
 - Repo-side signing is now configured for first device testing with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
@@ -50,6 +51,9 @@
   - See a capture routine with completed and pending steps plus a single next-best action for the club rep
   - See a re-entry plan that spells out the primary start zone, backup recovery zone, and whether those choices align with the clearest setup corridor through the venue
   - Review and override the saved handoff route directly from planning, not only while a scan session is active
+  - Keep import/export on the `Projects` surface instead of showing it during every planning and chalking task
+  - See planning framed as a step flow rather than a flat stack of equally weighted cards
+  - Get a run-focused chalking screen once a session starts, with setup details moved behind the active execution state
   - Get warned if the chosen start/recovery edges are not backed by the corresponding tagged landmarks
   - See when captured landmarks are too clustered around one part of the venue to make a robust handoff
   - Get a concrete next-capture suggestion when landmark spread is weak, such as capturing a durable reference on another side of the venue

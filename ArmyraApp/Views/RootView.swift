@@ -98,16 +98,18 @@ struct RootView: View {
             Text(store.importErrorMessage ?? "Unknown import error.")
         }
         .toolbar {
-            ToolbarItemGroup(placement: .bottomBar) {
-                Button("Import") {
-                    isImportingDocument = true
-                }
+            if selectedTab == .projects {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Import") {
+                        isImportingDocument = true
+                    }
 
-                Button("Export") {
-                    store.prepareExportDocument()
-                    isExportingDocument = true
+                    Button("Export") {
+                        store.prepareExportDocument()
+                        isExportingDocument = true
+                    }
+                    .disabled(store.selectedProject == nil)
                 }
-                .disabled(store.selectedProject == nil)
             }
         }
     }
