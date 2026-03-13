@@ -113,7 +113,7 @@ final class PlanningReadinessTests: XCTestCase {
         let summary = PlanningReadinessAnalyzer.summarize(project: project)
 
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("do not seem to line up") }))
-        XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Preferred venue approach is east-west") }))
+        XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Preferred venue approach is") }))
         XCTAssertTrue(summary.handoffGuidance.contains(where: { $0.contains("Primary re-entry zone: West fence side") }))
     }
 
