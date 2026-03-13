@@ -16,7 +16,7 @@ targets:
       - path: ArmyraApp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.headconnect.armyra
+        PRODUCT_BUNDLE_IDENTIFIER: com.kanavin.armyra
         PRODUCT_NAME: Armyra
         TARGETED_DEVICE_FAMILY: '1,2'
         GENERATE_INFOPLIST_FILE: YES
@@ -24,7 +24,7 @@ targets:
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ''
+        DEVELOPMENT_TEAM: 2924T28WXJ
     dependencies:
       - package: ArmyraCore
         product: ArmyraCore
@@ -35,7 +35,7 @@ targets:
       - path: ArmyraAppUITests
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.headconnect.armyra.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.kanavin.armyra.uitests
         PRODUCT_NAME: ArmyraAppUITests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: ArmyraApp

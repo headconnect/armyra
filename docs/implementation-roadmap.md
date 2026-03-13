@@ -32,6 +32,7 @@
 - Venue-scan readiness now also checks whether captured landmarks are actually spread around the venue, which helps catch scans that look complete on paper but are still clustered on one side in practice.
 - The planning workspace now turns poor landmark spread into an explicit next capture suggestion, so the rep gets a concrete “go capture the east/north side” style instruction instead of only a warning.
 - The planning workspace now also suggests a better landmark type when capture quality is weak, nudging the rep toward durable references like fences, buildings, or light posts instead of repeated vague objects.
+- The XcodeGen project is now preconfigured with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`, so the repo is ready for first-time device signing when opened in Xcode on a Mac.
 
 ## Active milestone: Field-day UX
 The current development focus is to make the handoff from club rep to parent feel trustworthy, fast, and easy to follow before deepening the AR implementation.
@@ -65,6 +66,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Validate schema versioning and incompatible package handling.
 - Connect export UI to iOS share sheet and Files integration.
 - Once an Apple development team is configured in the project, validate package import/export and planning flows on a physical iPhone.
+- Use a Mac/Xcode pass to complete the first direct iPhone install, since the repo-side signing values are now set but Apple still needs to mint local provisioning assets through Xcode.
 - Keep CI screenshots current so planning and chalking UI regressions are visible even before device deployment is available.
 - Treat CI screenshots as part of build verification, alongside package tests and simulator app builds, so visual regressions are caught in the same loop as functional breakages.
 

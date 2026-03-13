@@ -3,9 +3,10 @@
 ## Branch and CI
 - Active branch: `codex/ios-foundation`
 - Latest completed work now extends beyond `59fe341` and includes setup-corridor guidance, explicit landmark roles, and role-aware handoff gating.
+- Repo-side signing is now configured for first device testing with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
-- Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, captures simulator screenshots for the main flows, exports them from the UI-test result bundle, and uploads both the app artifact and PNG screenshots.
+  - Workflow currently runs Swift package tests, generates the Xcode project with XcodeGen, builds the iOS simulator app, captures simulator screenshots for the main flows, exports them from the UI-test result bundle, and uploads both the app artifact and PNG screenshots.
 
 ## What exists now
 ### Core domain
@@ -102,7 +103,8 @@ Keep tightening the club-side handoff quality:
 - Keep improving venue capture guidance so landmark roles and recovery instructions reflect real field-day behavior, not only label heuristics
 
 ## Signing note
-- Apple Developer enrollment appears to be in progress, but the repo is ready for the next signing step once a real Team ID is available.
-- When that is available, update `project.yml` with:
-  - `DEVELOPMENT_TEAM`
-  - a bundle identifier you control
+- Apple Developer enrollment is now active enough for repo-side signing configuration.
+- `project.yml` is configured with:
+  - `DEVELOPMENT_TEAM = 2924T28WXJ`
+  - `PRODUCT_BUNDLE_IDENTIFIER = com.kanavin.armyra`
+- The next step for real phone testing is still a Mac/Xcode pass so Apple can create or refresh the local provisioning assets and install to the iPhone directly.
