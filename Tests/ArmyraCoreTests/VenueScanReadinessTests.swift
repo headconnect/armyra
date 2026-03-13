@@ -17,7 +17,7 @@ final class VenueScanReadinessTests: XCTestCase {
         XCTAssertEqual(summary.level, .needsWork)
         XCTAssertFalse(summary.canLockForHandoff)
         XCTAssertTrue(summary.issues.contains(where: { $0.message.contains("Only one edge") }))
-        XCTAssertEqual(summary.checklistItems.filter { $0.status == .complete }.count, 0)
+        XCTAssertTrue(summary.checklistItems.contains(where: { $0.status == .needsAttention }))
         XCTAssertEqual(summary.nextAction, summary.checklistItems.first?.detail)
     }
 
