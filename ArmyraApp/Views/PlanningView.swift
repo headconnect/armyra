@@ -11,11 +11,11 @@ struct PlanningView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             planningFlowCard(for: project)
-                            readinessCard
                             venueScanWorkspaceCard(for: project)
-                            planningPreviewCard(for: project)
                             templatePickerCard
                             selectedLayoutInspector
+                            planningPreviewCard(for: project)
+                            readinessCard
 
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Saved Layouts")
@@ -60,6 +60,7 @@ struct PlanningView: View {
                             }
                         }
                         .padding()
+                        .padding(.bottom, 104)
                     }
                 } else {
                     ContentUnavailableView("No project selected", systemImage: "tray")
@@ -385,7 +386,7 @@ struct PlanningView: View {
 
     private var selectedLayoutInspector: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Step 4: Layout Details")
+            Text("Step 2: Refine Selected Pitch")
                 .font(.headline)
 
             if let layout = store.selectedLayout {

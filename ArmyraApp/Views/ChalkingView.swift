@@ -12,6 +12,7 @@ struct ChalkingView: View {
                         ScrollView {
                             activeSessionView(session: session)
                                 .padding()
+                                .padding(.bottom, 104)
                         }
                     } else {
                         List {
@@ -86,6 +87,10 @@ struct ChalkingView: View {
                                     .padding(.vertical, 6)
                                 }
                             }
+                        }
+                        .safeAreaInset(edge: .bottom) {
+                            Color.clear
+                                .frame(height: 80)
                         }
                     }
                 } else {
