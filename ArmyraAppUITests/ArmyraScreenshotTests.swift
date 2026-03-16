@@ -97,7 +97,7 @@ private enum ScreenshotScenario: CaseIterable {
         case .planning:
             return app.navigationBars["Planning"]
         case .planningScan:
-            return app.staticTexts["Capture Gate"]
+            return app.staticTexts["Current Scan Task"]
         case .chalking:
             return app.navigationBars["Chalking"]
         case .chalkingActive:
