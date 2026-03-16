@@ -72,6 +72,8 @@ struct PlanningView: View {
 
     private func venueScanWorkspaceCard(for project: ProjectPackage) -> some View {
         let scanReadiness = store.venueScanReadinessSummary()
+        let recommendedLandmarks = store.recommendedMockLandmarks()
+        let nextChecklistItem = store.nextVenueCaptureChecklistItem()
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -89,7 +91,7 @@ struct PlanningView: View {
             if let scanReadiness {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Capture Gate")
+                        Text("Current Scan Task")
                             .font(.subheadline.weight(.semibold))
                         Spacer()
                         Text(scanReadinessLabel(scanReadiness.level))
@@ -100,265 +102,107 @@ struct PlanningView: View {
                     Text(scanReadiness.summary)
                         .font(.subheadline)
 
-                    Text("Lock for handoff: \(scanReadiness.canLockForHandoff ? "yes" : "not yet")")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Text("Scan score: \(Int((scanReadiness.score * 100).rounded()))%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Handoff checklist")
+                    HStack {
+                        Text(store.venueCaptureProgressText())
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("Scan score: \(Int((scanReadiness.score * 100).rounded()))%")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
-                        ForEach(store.venueLandmarkChecklistLines(), id: \.self) { line in
-                            Label(line, systemImage: "checklist")
+                    if let nextChecklistItem {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(nextChecklistItem.title)
+                                .font(.subheadline.weight(.semibold))
+                            Text(nextChecklistItem.detail)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    } else {
+                        Label("The scan routine is complete. Review the route and lock this handoff package.", systemImage: "checkmark.seal.fill")
+                            .font(.caption)
+                            .foregroundStyle(.green)
                     }
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Capture routine")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-
-                        ForEach(scanReadiness.checklistItems) { item in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Label(
-                                    item.title,
-                                    systemImage: item.status == .complete ? "checkmark.circle.fill" : "circle.dotted"
-                                )
-                                .font(.caption)
-                                .foregroundStyle(item.status == .complete ? .green : .primary)
-
-                                Text(item.detail)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-
-                    if let nextAction = scanReadiness.nextAction {
+                    if let nextAction = scanReadiness.nextAction, nextChecklistItem != nil {
                         Label("Next best action: \(nextAction)", systemImage: "arrow.forward.circle.fill")
                             .font(.caption)
                             .foregroundStyle(.blue)
-                    }
-
-                    if let spreadGuidance = store.venueSpreadGuidanceText() {
-                        Label(spreadGuidance, systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let durabilityGuidance = store.venueDurabilityGuidanceText() {
-                        Label(durabilityGuidance, systemImage: "building.columns")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    ForEach(scanReadiness.issues) { issue in
-                        Label(
-                            issue.message,
-                            systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill"
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(issue.level == .needsWork ? .red : .orange)
-                    }
-
-                    if let venueScanSession = store.venueScanSession {
-                        preferredEdgeSummary(
-                            startEdge: venueScanSession.preferredStartEdge,
-                            recoveryEdge: venueScanSession.preferredRecoveryEdge
-                        )
-                    } else {
-                        preferredEdgeSummary(
-                            startEdge: project.venueScan.preferredStartEdge,
-                            recoveryEdge: project.venueScan.preferredRecoveryEdge
-                        )
                     }
                 }
                 .padding()
                 .background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
 
-            if let snapshot = store.planningTrackingSnapshot {
-                Label(store.planningRelocalizationLabel(), systemImage: "dot.scope")
-                    .font(.subheadline.weight(.semibold))
-
-                Text(snapshot.activeHint)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let asset = store.latestVenueTrackingAsset() {
-                Text("Latest local tracking asset: \(asset.localStorageKey)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("No local tracking asset saved yet. Finalizing a scan will create one for future relocalization.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let diagnostics = store.planningDiagnostics() {
-                diagnosticsCard(
-                    title: "AR Diagnostics",
-                    diagnostics: diagnostics
-                )
-            }
-
-            if !store.planningDiagnosticsHistory.isEmpty {
-                diagnosticsHistoryCard(
-                    title: "Recent Events",
-                    events: store.planningDiagnosticsHistory
-                )
-            }
-
-            if store.isPersistingVenueTrackingAsset {
-                Label("Saving local relocalization asset...", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             if let session = store.venueScanSession {
-                Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
-                    .font(.subheadline)
-
-                Text(session.recommendedHint)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Text("Covered sides: \(session.coveredSides)/4")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                preferredEdgeSummary(
-                    startEdge: session.preferredStartEdge,
-                    recoveryEdge: session.preferredRecoveryEdge
-                )
-
-                if !store.availableVenueScanEdgeOptions().isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Review Handoff Edges")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
+                            .font(.subheadline)
+                        Spacer()
+                        Text("Covered sides: \(session.coveredSides)/4")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-
-                        Menu {
-                            ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
-                                Button(edge) {
-                                    store.updateVenueScanPreferredStartEdge(edge)
-                                }
-                            }
-                        } label: {
-                            Label(
-                                "Start edge: \(session.preferredStartEdge ?? "Choose edge")",
-                                systemImage: "flag.fill"
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.bordered)
-
-                        Menu {
-                            ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
-                                Button(edge) {
-                                    store.updateVenueScanPreferredRecoveryEdge(edge)
-                                }
-                            }
-                        } label: {
-                            Label(
-                                "Recovery edge: \(session.preferredRecoveryEdge ?? "Choose edge")",
-                                systemImage: "arrow.uturn.backward.circle.fill"
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.bordered)
                     }
-                }
 
-                if session.capturedLandmarks.isEmpty {
-                    Text("No landmarks captured yet.")
+                    Text(session.recommendedHint)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                } else {
-                    Text("Tag one clear setup-side object and one separate recovery-side object before locking the scan.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
 
-                    Text("Aim to capture named references on more than one edge, not just repeated objects from the same side.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if scanReadiness?.canLockForHandoff == true {
+                        Button {
+                            store.finalizeVenueScanSession()
+                        } label: {
+                            Label("Lock For Handoff", systemImage: "checkmark.seal.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else if let primaryLandmark = recommendedLandmarks.first {
+                        Button {
+                            store.captureVenueLandmark(primaryLandmark)
+                        } label: {
+                            Label("Capture \(primaryLandmark)", systemImage: "plus.circle.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else {
+                        Button {
+                            store.advanceVenueCoverage()
+                        } label: {
+                            Label("Advance Coverage Review", systemImage: "arrow.triangle.branch")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
 
-                    ForEach(session.capturedLandmarks, id: \.self) { landmark in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Label(landmark, systemImage: "mappin.and.ellipse")
-                                .font(.subheadline)
-
+                    HStack {
+                        if recommendedLandmarks.count > 1 && scanReadiness?.canLockForHandoff == false {
                             Menu {
-                                Button("General landmark") {
-                                    store.updateVenueLandmarkRole(landmark, role: .general)
-                                }
-                                Button("Start-side candidate") {
-                                    store.updateVenueLandmarkRole(landmark, role: .startCandidate)
-                                }
-                                Button("Recovery-side candidate") {
-                                    store.updateVenueLandmarkRole(landmark, role: .recoveryCandidate)
+                                ForEach(recommendedLandmarks.dropFirst(), id: \.self) { landmark in
+                                    Button(landmark) {
+                                        store.captureVenueLandmark(landmark)
+                                    }
                                 }
                             } label: {
-                                Label(
-                                    roleLabel(for: store.landmarkRole(for: landmark)),
-                                    systemImage: "tag.fill"
-                                )
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Label("Other Capture Options", systemImage: "list.bullet")
                             }
                             .buttonStyle(.bordered)
                         }
-                    }
-                }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Capture Landmark")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        if scanReadiness?.canLockForHandoff == false {
+                            Button("Save Draft Anyway") {
+                                store.finalizeVenueScanSession(forceDraftSave: true)
+                            }
+                            .buttonStyle(.bordered)
+                        }
 
-                    ForEach(store.availableMockLandmarks(), id: \.self) { landmark in
-                        Button {
-                            store.captureVenueLandmark(landmark)
-                        } label: {
-                            Label(landmark, systemImage: "plus.circle")
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                        Button("Discard") {
+                            store.discardVenueScanSession()
                         }
                         .buttonStyle(.bordered)
                     }
-                }
-
-                HStack {
-                    Button {
-                        store.advanceVenueCoverage()
-                    } label: {
-                        Label("Advance Coverage", systemImage: "arrow.triangle.branch")
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button("Lock for Handoff") {
-                        store.finalizeVenueScanSession()
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(scanReadiness?.canLockForHandoff == false)
-
-                    if scanReadiness?.canLockForHandoff == false {
-                        Button("Save Draft Anyway") {
-                            store.finalizeVenueScanSession(forceDraftSave: true)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-
-                    Button("Discard") {
-                        store.discardVenueScanSession()
-                    }
-                    .buttonStyle(.bordered)
                 }
 
                 if scanReadiness?.canLockForHandoff == false {
@@ -377,6 +221,190 @@ struct PlanningView: View {
                     Label("Start Mock Venue Scan", systemImage: "camera.metering.matrix")
                 }
                 .buttonStyle(.borderedProminent)
+            }
+
+            DisclosureGroup("Review Scan Details") {
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Handoff checklist")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ForEach(store.venueLandmarkChecklistLines(), id: \.self) { line in
+                            Label(line, systemImage: "checklist")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if let scanReadiness {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Capture routine")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            ForEach(scanReadiness.checklistItems) { item in
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Label(
+                                        item.title,
+                                        systemImage: item.status == .complete ? "checkmark.circle.fill" : "circle.dotted"
+                                    )
+                                    .font(.caption)
+                                    .foregroundStyle(item.status == .complete ? .green : .primary)
+
+                                    Text(item.detail)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+
+                        if let spreadGuidance = store.venueSpreadGuidanceText() {
+                            Label(spreadGuidance, systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let durabilityGuidance = store.venueDurabilityGuidanceText() {
+                            Label(durabilityGuidance, systemImage: "building.columns")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        ForEach(scanReadiness.issues) { issue in
+                            Label(
+                                issue.message,
+                                systemImage: issue.level == .needsWork ? "xmark.octagon.fill" : "exclamationmark.triangle.fill"
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(issue.level == .needsWork ? .red : .orange)
+                        }
+                    }
+
+                    if let venueScanSession = store.venueScanSession {
+                        preferredEdgeSummary(
+                            startEdge: venueScanSession.preferredStartEdge,
+                            recoveryEdge: venueScanSession.preferredRecoveryEdge
+                        )
+                    } else {
+                        preferredEdgeSummary(
+                            startEdge: project.venueScan.preferredStartEdge,
+                            recoveryEdge: project.venueScan.preferredRecoveryEdge
+                        )
+                    }
+
+                    if !store.availableVenueScanEdgeOptions().isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Review Handoff Edges")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Menu {
+                                ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
+                                    Button(edge) {
+                                        store.updateVenueScanPreferredStartEdge(edge)
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    "Start edge: \((store.venueScanSession?.preferredStartEdge ?? project.venueScan.preferredStartEdge) ?? "Choose edge")",
+                                    systemImage: "flag.fill"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.bordered)
+
+                            Menu {
+                                ForEach(store.availableVenueScanEdgeOptions(), id: \.self) { edge in
+                                    Button(edge) {
+                                        store.updateVenueScanPreferredRecoveryEdge(edge)
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    "Recovery edge: \((store.venueScanSession?.preferredRecoveryEdge ?? project.venueScan.preferredRecoveryEdge) ?? "Choose edge")",
+                                    systemImage: "arrow.uturn.backward.circle.fill"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+
+                    if let session = store.venueScanSession, session.capturedLandmarks.isEmpty == false {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Captured Landmarks")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            ForEach(session.capturedLandmarks, id: \.self) { landmark in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Label(landmark, systemImage: "mappin.and.ellipse")
+                                        .font(.subheadline)
+
+                                    Menu {
+                                        Button("General landmark") {
+                                            store.updateVenueLandmarkRole(landmark, role: .general)
+                                        }
+                                        Button("Start-side candidate") {
+                                            store.updateVenueLandmarkRole(landmark, role: .startCandidate)
+                                        }
+                                        Button("Recovery-side candidate") {
+                                            store.updateVenueLandmarkRole(landmark, role: .recoveryCandidate)
+                                        }
+                                    } label: {
+                                        Label(
+                                            roleLabel(for: store.landmarkRole(for: landmark)),
+                                            systemImage: "tag.fill"
+                                        )
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(.bordered)
+                                }
+                            }
+                        }
+                    }
+
+                    if let snapshot = store.planningTrackingSnapshot {
+                        Label(store.planningRelocalizationLabel(), systemImage: "dot.scope")
+                            .font(.subheadline.weight(.semibold))
+
+                        Text(snapshot.activeHint)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let asset = store.latestVenueTrackingAsset() {
+                        Text("Latest local tracking asset: \(asset.localStorageKey)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("No local tracking asset saved yet. Finalizing a scan will create one for future relocalization.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let diagnostics = store.planningDiagnostics() {
+                        diagnosticsCard(
+                            title: "AR Diagnostics",
+                            diagnostics: diagnostics
+                        )
+                    }
+
+                    if !store.planningDiagnosticsHistory.isEmpty {
+                        diagnosticsHistoryCard(
+                            title: "Recent Events",
+                            events: store.planningDiagnosticsHistory
+                        )
+                    }
+
+                    if store.isPersistingVenueTrackingAsset {
+                        Label("Saving local relocalization asset...", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.top, 6)
             }
         }
         .padding()

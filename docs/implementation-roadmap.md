@@ -37,6 +37,7 @@
 - The planner now also exposes a persistent handoff-route review step, so the club can revisit and override the primary or backup re-entry zone even after a scan has been saved.
 - The main app surfaces are now being simplified around task flow: import/export stays on `Projects`, planning is framed as steps, and active chalking is promoted into a dedicated run-focused screen instead of sharing space equally with setup details.
 - Screenshot capture in CI is now part of the UX verification loop, and the latest screenshot review drove another cleanup pass so planning reads in scan-to-approval order and the task screens have more bottom breathing room above the tab bar.
+- The venue scan card is now being simplified into a checklist-first club workflow: a compact current-task summary, one prominent next action, and a secondary disclosure for deeper capture review, role tagging, and diagnostics.
 - The XcodeGen project is now preconfigured with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`, so the repo is ready for first-time device signing when opened in Xcode on a Mac.
 
 ## Active milestone: Field-day UX
@@ -55,6 +56,7 @@ The current development focus is to make the handoff from club rep to parent fee
 - Keep strengthening the post-scan route review so saved packages can still be corrected before they are handed to volunteers.
 - Keep simplifying the visible workflow so the strongest next action is obvious on each screen and the app reads less like a prototype console.
 - Keep using CI screenshots as a design check so simplification decisions come from the visible app, not just from internal logic.
+- Keep simplifying the club capture flow until it feels like a field checklist rather than a scan control panel.
 - Let the rep review and adjust the automatically suggested start/recovery edges before locking the scan.
 - Use explicit landmark roles more directly in readiness scoring so handoff confidence depends less on label heuristics over time.
 - Add role-aware capture guidance that nudges the rep toward a more balanced landmark spread, not just one start object and one fallback object.

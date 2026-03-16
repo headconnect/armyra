@@ -8,6 +8,7 @@
 - The saved planner flow now also includes a persistent handoff-route review step, so start and recovery zones can be corrected even after the scan itself is finished.
 - The current UX pass is also simplifying the visible workflow so task screens behave more like focused tools and less like mixed planning/debug dashboards.
 - Fresh CI screenshots are now being used as a normal UX review input, and the latest review led to another cleanup pass around section order and bottom spacing.
+- The venue scan workspace is now shifting toward a checklist-first planner UX, with a single prominent next action and the denser scan controls moved behind review details.
 - Repo-side signing is now configured for first device testing with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`
@@ -61,6 +62,7 @@
   - See when captured landmarks are too clustered around one part of the venue to make a robust handoff
   - Get a concrete next-capture suggestion when landmark spread is weak, such as capturing a durable reference on another side of the venue
   - Get a durability hint when capture variety is weak, such as preferring a fence, building, or light post next
+  - Get a checklist-style scan card with a current task, progress summary, and one main action instead of a large cluster of equally weighted controls
   - Save a local tracking asset
   - Inspect AR diagnostics for planning capture
   - See a handoff-oriented readiness summary for parent-safe chalking

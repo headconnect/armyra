@@ -622,6 +622,30 @@ final class ProjectStore: ObservableObject {
         ]
     }
 
+    func nextVenueCaptureChecklistItem() -> VenueCaptureChecklistItem? {
+        venueScanReadinessSummary()?.checklistItems.first(where: { $0.status == .needsAttention })
+    }
+
+    func venueCaptureProgressText() -> String {
+        guard let summary = venueScanReadinessSummary() else { return "No scan routine yet" }
+        let completed = summary.checklistItems.filter { $0.status == .complete }.count
+        return "\(completed)/\(summary.checklistItems.count) scan steps ready"
+    }
+
+    func recommendedMockLandmarks(limit: Int = 3) -> [String] {
+        let captured = Set(venueScanSession?.capturedLandmarks ?? [])
+        let available = availableMockLandmarks().filter { !captured.contains($0) }
+        guard let summary = venueScanReadinessSummary(), available.isEmpty == false else {
+            return Array(available.prefix(limit))
+        }
+
+        let prioritized = available.sorted { lhs, rhs in
+            recommendationScore(for: lhs, summary: summary) > recommendationScore(for: rhs, summary: summary)
+        }
+
+        return Array(prioritized.prefix(limit))
+    }
+
     func venueSpreadGuidanceText() -> String? {
         guard let summary = venueScanReadinessSummary(),
               !summary.suggestedCaptureZones.isEmpty,
@@ -816,6 +840,29 @@ final class ProjectStore: ObservableObject {
         let status = summary.inferredLandmarkZoneCount >= 2 ? "ok" : "needs review"
         let noun = summary.inferredLandmarkZoneCount == 1 ? "zone" : "zones"
         return "Landmark spread: \(summary.inferredLandmarkZoneCount) \(noun) named (\(status))"
+    }
+
+    private func recommendationScore(for landmark: String, summary: VenueScanReadinessSummary) -> Int {
+        let normalized = landmark.lowercased()
+        var score = 0
+
+        for zone in summary.suggestedCaptureZones {
+            if normalized.contains(zone.lowercased()) {
+                score += 3
+            }
+        }
+
+        for kind in summary.suggestedCaptureKinds {
+            let token = kind.lowercased()
+            if normalized.contains(token)
+                || (token == "building" && (normalized.contains("roof") || normalized.contains("house") || normalized.contains("clubhouse")))
+                || (token == "light post" && (normalized.contains("floodlight") || normalized.contains("mast") || normalized.contains("light") || normalized.contains("post")))
+                || (token == "shelter" && (normalized.contains("bench") || normalized.contains("shelter"))) {
+                score += 2
+            }
+        }
+
+        return score
     }
 
     static var preview: ProjectStore {
