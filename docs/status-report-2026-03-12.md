@@ -9,6 +9,7 @@
 - The current UX pass is also simplifying the visible workflow so task screens behave more like focused tools and less like mixed planning/debug dashboards.
 - Fresh CI screenshots are now being used as a normal UX review input, and the latest review led to another cleanup pass around section order and bottom spacing.
 - The venue scan workspace is now shifting toward a checklist-first planner UX, with a single prominent next action and the denser scan controls moved behind review details.
+- The venue scan card now puts the primary action inside the current-task summary so the next step is visible earlier in the first viewport.
 - Repo-side signing is now configured for first device testing with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`.
 - GitHub Actions is green on the latest run:
   - `23009941554` for commit `59fe341`

@@ -131,27 +131,8 @@ struct PlanningView: View {
                             .font(.caption)
                             .foregroundStyle(.blue)
                     }
-                }
-                .padding()
-                .background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
 
-            if let session = store.venueScanSession {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
-                            .font(.subheadline)
-                        Spacer()
-                        Text("Covered sides: \(session.coveredSides)/4")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Text(session.recommendedHint)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    if scanReadiness?.canLockForHandoff == true {
+                    if scanReadiness.canLockForHandoff {
                         Button {
                             store.finalizeVenueScanSession()
                         } label: {
@@ -167,7 +148,7 @@ struct PlanningView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
-                    } else {
+                    } else if store.venueScanSession != nil {
                         Button {
                             store.advanceVenueCoverage()
                         } label: {
@@ -175,6 +156,29 @@ struct PlanningView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                    } else {
+                        Button {
+                            store.startVenueScanSession()
+                        } label: {
+                            Label("Start Mock Venue Scan", systemImage: "camera.metering.matrix")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+                .padding()
+                .background(.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+
+            if let session = store.venueScanSession {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("Phase: \(session.phase.rawValue.capitalized)", systemImage: "scope")
+                            .font(.subheadline)
+                        Spacer()
+                        Text("Covered sides: \(session.coveredSides)/4")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
 
                     HStack {
@@ -210,17 +214,6 @@ struct PlanningView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            } else {
-                Text("Start a planning scan to rehearse the landmark capture and relocalization workflow before ARKit is wired in.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                Button {
-                    store.startVenueScanSession()
-                } label: {
-                    Label("Start Mock Venue Scan", systemImage: "camera.metering.matrix")
-                }
-                .buttonStyle(.borderedProminent)
             }
 
             DisclosureGroup("Review Scan Details") {
@@ -333,6 +326,10 @@ struct PlanningView: View {
 
                     if let session = store.venueScanSession, session.capturedLandmarks.isEmpty == false {
                         VStack(alignment: .leading, spacing: 8) {
+                            Text(session.recommendedHint)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
                             Text("Captured Landmarks")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)

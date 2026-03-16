@@ -38,6 +38,7 @@
 - The main app surfaces are now being simplified around task flow: import/export stays on `Projects`, planning is framed as steps, and active chalking is promoted into a dedicated run-focused screen instead of sharing space equally with setup details.
 - Screenshot capture in CI is now part of the UX verification loop, and the latest screenshot review drove another cleanup pass so planning reads in scan-to-approval order and the task screens have more bottom breathing room above the tab bar.
 - The venue scan card is now being simplified into a checklist-first club workflow: a compact current-task summary, one prominent next action, and a secondary disclosure for deeper capture review, role tagging, and diagnostics.
+- The primary venue-scan action now lives directly inside the current-task card, so the club rep can understand the task and act from the same first viewport.
 - The XcodeGen project is now preconfigured with Team ID `2924T28WXJ` and bundle ID `com.kanavin.armyra`, so the repo is ready for first-time device signing when opened in Xcode on a Mac.
 
 ## Active milestone: Field-day UX
